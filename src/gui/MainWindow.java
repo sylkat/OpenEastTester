@@ -22,21 +22,35 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     private InfoPanel infoPanel;
 
     public MainWindow() {
-        super("ET431 PC Controller");
+        super("Open East Tester");
+
         initialize();
     }
 
     private void initialize() {
+        setIcon();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(725, 400);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-
         setupComponents();
         setupListeners();
-
         meterController = new MeterController(this);
         setVisible(true);
+    }
+
+    private void setIcon(){
+        try {
+            java.net.URL iconURL = getClass().getResource("/resources/app_icon.png");
+            if (iconURL != null) {
+                ImageIcon icon = new ImageIcon(iconURL);
+                setIconImage(icon.getImage());
+            } else {
+                System.err.println("Icon not found");
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading icon: " + e.getMessage());
+        }
     }
 
     /**
