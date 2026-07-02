@@ -41,6 +41,18 @@ Requirements:
 
 Clone the repository and build normally.
 
+## Roadmap
+
+- [x] Real-time measurements
+- [x] Bidirectional synchronization
+- [x] Automatic hardware state synchronization
+- [x] Cross-platform support
+- [ ] CSV data logging
+- [ ] Measurement graph
+- [ ] Auto-connect to last serial port
+- [ ] Support for additional ET4x models
+- [ ] Binary releases for Windows/Linux
+
 ## License
 
 GPL v3
