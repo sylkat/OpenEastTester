@@ -2,6 +2,10 @@
 
 Open source desktop software for East Tester LCR meters.
 
+<p align="center">
+  <img src="screenshots/openet.gif" alt="ET4 LCR Controller in Action" width="700">
+</p>
+
 ## Why?
 
 The official software works, but it feels outdated and lacks several features
