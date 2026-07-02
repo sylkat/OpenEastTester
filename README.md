@@ -5,13 +5,16 @@ Open source desktop software for East Tester LCR meters.
 <p align="center">
   <img src="screenshots/openet.gif" alt="ET4 LCR Controller in Action" width="700">
 </p>
+<p align="center">
+<b>Real-time bidirectional synchronization between the PC application and the instrument.</b>
+</p>
 
 ## Why?
 
 The official software works, but it feels outdated and lacks several features
 that make everyday use more comfortable.
 
-This project started as a personal tool for my own ET431, but it has been
+This project started as a personal tool for my ET431, but it has been
 designed with the idea of supporting other East Tester LCR meters using the
 same serial protocol.
 
@@ -19,22 +22,39 @@ same serial protocol.
 
 - Real-time measurements
 - Bidirectional synchronization
-- Automatic hardware state detection
-- Cross-platform (Java)
+- Automatic hardware state synchronization
 - Serial communication
+- Modern desktop interface
 
 ## Supported devices
 
-Tested:
+### Tested
 
 - ET431
 
-Expected to work:
+### Expected to work
 
 - ET43x series
-- ET44x series (needs confirmation)
+- ET44x series
 
-If you own another model, feel free to test it and open an issue.
+If you own another model, please let me know whether it works.
+
+
+## Installation
+
+Download the latest release from GitHub.
+
+Linux:
+
+```bash
+sudo apt install ./OpenEastTester.deb
+```
+
+Cross-platform:
+
+```bash
+java -jar OpenEastTester.jar
+```
 
 ## Building
 
@@ -53,16 +73,16 @@ Clone the repository and build normally.
 - [x] Cross-platform support
 - [ ] CSV data logging
 - [ ] Measurement graph
-- [ ] Auto-connect to last serial port
 - [ ] Support for additional ET4x models
-- [ ] Binary releases for Windows/Linux
+- [ ] Native installers for Windows
+
 
 ## License
 
-GPL v3
+Licensed under GPL v3.
 
-If you improve the software and distribute your version, please contribute
-those improvements back to the community.
+If you distribute a modified version of this software, please make your
+changes available under the same license.
 
 ## Notes
 
