@@ -11,6 +11,7 @@ import et431.util.*;
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
+import java.util.Map; // Agregado para tipar explícitamente los mapas en Java 8
 
 import static et431.util.Constants.*;
 
@@ -20,16 +21,14 @@ import static et431.util.Constants.*;
  */
 public class DerivedPanel extends JPanel {
 
-    private JLabel lblTitle;
     private JLabel[] valueLabels;
     private JLabel[] tagLabels;
 
     // --- HIGH-CONTRAST TECH PALETTE (Cloned from InfoPanel) ---
-    // --- HIGH-CONTRAST TECH PALETTE (Cloned from InfoPanel) ---
     private final Color BG_PANEL = new Color(17, 24, 39);         // Deep Dark Slate
     private final Color TEXT_LABEL = new Color(156, 163, 175);     // Muted Gray for Labels
 
-    // CAMBIADO: De cian eléctrico a Verde de Laboratorio de alta visibilidad (Bench Matrix Green)
+    // Verde de Laboratorio de alta visibilidad (Bench Matrix Green)
     private final Color TEXT_VALUE = new Color(34, 197, 94);       // Hex: #22C55E (Vibrant Laboratory Green)
 
     private final Color BORDER_COLOR = new Color(55, 65, 81);      // Subtle dark separator divider
@@ -38,14 +37,7 @@ public class DerivedPanel extends JPanel {
         initialize();
     }
 
-    // ============================================================
-//  Versión mejorada de initialize()
-//  Mismo BG_PANEL, TEXT_LABEL y TEXT_VALUE que ya usas.
-//  Se agrega un color ACCENT_COLOR (o usa el que ya tengas
-//  definido en tu paleta, p. ej. un azul/verde de acento).
-// ============================================================
-
-    private static final Color ACCENT_COLOR = new Color(56, 189, 248); // ajusta a tu paleta
+    private static final Color ACCENT_COLOR = new Color(56, 189, 248);
 
     private void initialize() {
         setLayout(new BorderLayout(0, 16));
@@ -55,30 +47,7 @@ public class DerivedPanel extends JPanel {
                 BorderFactory.createEmptyBorder(16, 18, 16, 18)
         ));
 
-        // --- TÍTULO CON ACENTO ---
-        JPanel titlePanel = new JPanel();
-        titlePanel.setOpaque(false);
-        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
 
-        lblTitle = new JLabel("DERIVED PARAMETERS");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
-        lblTitle.setForeground(TEXT_LABEL);
-        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
-
-        JPanel underline = new JPanel();
-        underline.setBackground(ACCENT_COLOR);
-        underline.setPreferredSize(new Dimension(36, 2));
-        underline.setMaximumSize(new Dimension(36, 2));
-        underline.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        titlePanel.add(lblTitle);
-        titlePanel.add(Box.createVerticalStrut(6));
-        titlePanel.add(underline);
-
-        add(titlePanel, BorderLayout.NORTH);
-
-        // --- GRID 3x2 DE TARJETAS ---
         JPanel gridPanel = new JPanel(new GridLayout(3, 2, 14, 12));
         gridPanel.setOpaque(false);
 
@@ -100,7 +69,6 @@ public class DerivedPanel extends JPanel {
             tagLabels[i].setForeground(TEXT_LABEL);
             tagLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
 
-            // Valor arriba, etiqueta abajo (más legible en tarjeta)
             block.add(valueLabels[i]);
             block.add(tagLabels[i]);
 
@@ -111,10 +79,6 @@ public class DerivedPanel extends JPanel {
         clear();
     }
 
-    /**
-     * Mezcla un color base con otro (blanco/negro) para aclarar u oscurecer
-     * ligeramente sin salir de la paleta original.
-     */
     private static Color blend(Color base, Color target, float ratio) {
         int r = (int) (base.getRed()   + (target.getRed()   - base.getRed())   * ratio);
         int g = (int) (base.getGreen() + (target.getGreen() - base.getGreen()) * ratio);
@@ -122,11 +86,6 @@ public class DerivedPanel extends JPanel {
         return new Color(r, g, b);
     }
 
-    /**
-     * Panel con esquinas redondeadas, usado como "tarjeta" para cada métrica.
-     * Mantiene el color de fondo del panel general, solo con un tono sutilmente
-     * distinto para dar profundidad sin romper la paleta.
-     */
     private static class RoundedCardPanel extends JPanel {
         private final int arc;
         private final Color bg;
@@ -143,7 +102,6 @@ public class DerivedPanel extends JPanel {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(bg);
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), arc, arc);
-            // Borde muy sutil para separar la tarjeta del fondo
             g2.setColor(new Color(255, 255, 255, 12));
             g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
             g2.dispose();
@@ -157,16 +115,14 @@ public class DerivedPanel extends JPanel {
             return;
         }
 
-       // final String title;
         final String[] labels;
         final String[] values = new String[6];
 
         switch (dto.getMeasureType()) {
             case "R":
-               // title = "Derived from Resistance";
-                labels = Constants.labelsResistance; // Assuming these are in Constants
+                labels = Constants.labelsResistance;
                 if (dto.getResistanceDerivator() != null) {
-                    var map = dto.getResistanceDerivator();
+                    Map<DerivateResistance, Double> map = dto.getResistanceDerivator();
                     values[0] = formatValue(map.get(DerivateResistance.IMPEDANCE), "Ω");
                     values[1] = formatValue(map.get(DerivateResistance.PHASE_ANGLE), "°");
                     values[2] = formatValue(map.get(DerivateResistance.QUALITY_FACTOR), "");
@@ -177,38 +133,35 @@ public class DerivedPanel extends JPanel {
                 break;
 
             case "C":
-               // title = "Derived from Capacitance";
                 labels = Constants.labelsCapacitance;
-                if (dto.getCapacitanceDerivator() != null ) { // Adjusted variable name to match your DTO getter
-                    var map = dto.getCapacitanceDerivator();
+                if (dto.getCapacitanceDerivator() != null) {
+                    Map<DerivateCapacitance, Double> map = dto.getCapacitanceDerivator();
                     values[0] = formatValue(map.get(DerivateCapacitance.EQUIVALENT_SERIES_RESISTANCE), "Ω");
                     values[1] = formatValue(map.get(DerivateCapacitance.REACTANCE), "Ω");
                     values[2] = formatValue(map.get(DerivateCapacitance.IMPEDANCE), "Ω");
                     values[3] = formatValue(map.get(DerivateCapacitance.PHASE_ANGLE), "°");
                     values[4] = formatValue(map.get(DerivateCapacitance.QUALITY_FACTOR), "");
-                    values[5] = ""; // Empty Slot
+                    values[5] = "";
                 }
                 break;
 
             case "L":
-               // title = "Derived from Inductance";
                 labels = Constants.labelsInductance;
                 if (dto.getInductanceDerivator() != null) {
-                    var map = dto.getInductanceDerivator();
+                    Map<DerivateInductance, Double> map = dto.getInductanceDerivator();
                     values[0] = formatValue(map.get(DerivateInductance.SERIES_RESISTANCE), "Ω");
                     values[1] = formatValue(map.get(DerivateInductance.REACTANCE), "Ω");
                     values[2] = formatValue(map.get(DerivateInductance.IMPEDANCE), "Ω");
                     values[3] = formatValue(map.get(DerivateInductance.PHASE_ANGLE), "°");
                     values[4] = formatValue(map.get(DerivateInductance.LOSS_FACTOR), "");
-                    values[5] = ""; // Empty Slot
+                    values[5] = "";
                 }
                 break;
 
             case "Z":
-               // title = "Derived from Impedance";
                 labels = Constants.labelsImpedance;
                 if (dto.getImpedanceDerivator() != null) {
-                    var map = dto.getImpedanceDerivator();
+                    Map<DerivateImpedance, Double> map = dto.getImpedanceDerivator();
                     values[0] = formatValue(map.get(DerivateImpedance.RESISTANCE), "Ω");
                     values[1] = formatValue(map.get(DerivateImpedance.PHASE_ANGLE), "°");
                     values[2] = formatValue(map.get(DerivateImpedance.QUALITY_FACTOR), "");
@@ -219,25 +172,18 @@ public class DerivedPanel extends JPanel {
                 break;
 
             default:
-               // title = "Derived Parameters";
                 labels = null;
                 break;
         }
 
         SwingUtilities.invokeLater(() -> {
-            //if (title != null) {
-           //     lblTitle.setText(title.toUpperCase());
-          //  }
-
             for (int i = 0; i < 6; i++) {
-                // Update Metric Tags/Labels
                 if (labels != null && i < labels.length && labels[i] != null) {
                     tagLabels[i].setText(labels[i].toUpperCase());
                 } else {
                     tagLabels[i].setText("");
                 }
 
-                // Update Metric Numerical Values
                 if (values != null && i < values.length && values[i] != null) {
                     valueLabels[i].setText(values[i]);
                 } else {
@@ -251,19 +197,16 @@ public class DerivedPanel extends JPanel {
     }
 
     private String formatValue(Double value, String unit) {
-
         if (value == null || Double.isNaN(value) || Double.isInfinite(value)) {
             return "";
         }
 
-        // Sin unidad (Q, D...)
         if (unit == null || unit.isEmpty()) {
             return String.format("%.3f", value);
         }
 
         double abs = Math.abs(value);
 
-        // --- EXCEPCIÓN PARA RESISTENCIA BAJA (Evita mΩ y µΩ, muestra 0.000 Ω) ---
         if ("Ω".equals(unit) && abs < 1.0) {
             return String.format("%.3f Ω", value);
         }
@@ -311,12 +254,8 @@ public class DerivedPanel extends JPanel {
         return String.format("%.3f %s%s", scaled, prefix, unit);
     }
 
-    /**
-     * Resets indicators back to a clean default state.
-     */
     public void clear() {
         SwingUtilities.invokeLater(() -> {
-            lblTitle.setText("DERIVED PARAMETERS");
             for (int i = 0; i < 6; i++) {
                 tagLabels[i].setText("N/A");
                 valueLabels[i].setText("---");
