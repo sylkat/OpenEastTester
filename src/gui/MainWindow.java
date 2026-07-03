@@ -20,6 +20,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     private MeasurementPanel measurementPanel;
     private MeterController meterController;
     private InfoPanel infoPanel;
+    private DerivedPanel derivedPanel;
 
     public MainWindow() {
         super("Open East Tester");
@@ -30,7 +31,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     private void initialize() {
         setIcon();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(725, 400);
+        setSize(825, 400);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         setupComponents();
@@ -61,10 +62,17 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         statusBar = new StatusBar();
         measurementPanel = new MeasurementPanel();
         infoPanel = new InfoPanel(configurationPanel);
+        derivedPanel = new DerivedPanel();
+
+        JPanel centerContainer = new JPanel(new BorderLayout(10, 0));
+        centerContainer.setOpaque(false);
+        centerContainer.add(measurementPanel, BorderLayout.CENTER);
+        centerContainer.add(derivedPanel, BorderLayout.EAST);
+
         add(configurationPanel, BorderLayout.EAST);
         add(statusBar, BorderLayout.SOUTH);
-        add(measurementPanel, BorderLayout.CENTER);
         add(infoPanel, BorderLayout.NORTH);
+        add(centerContainer, BorderLayout.CENTER); // Añadimos el contenedor intermedio aquí
     }
 
     /**
@@ -154,6 +162,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     public void onMeasurementReceived(MeasurementDTO dto) {
         measurementPanel.setPrimary(dto.getTypeA(), dto.getValueA());
         measurementPanel.setSecondary(dto.getTypeB(), dto.getValueB());
+        derivedPanel.updateDisplay(dto);
     }
 
     @Override
@@ -169,6 +178,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
             statusBar.setModel("-");
             statusBar.setFirmware("-");
             measurementPanel.clear();
+            derivedPanel.clear();
         }
     }
 

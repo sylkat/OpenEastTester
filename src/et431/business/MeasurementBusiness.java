@@ -5,11 +5,11 @@ import et431.beans.Measurement;
 import et431.beans.MeasurementDTO;
 import et431.enums.*;
 import et431.observer.MeasurementObserver;
-import et431.util.DisplayFormatter;
-import et431.util.ValueFormatter;
+import et431.util.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Background worker that continuously polls data and syncs config from the LCR meter.
@@ -109,6 +109,10 @@ public class MeasurementBusiness implements Runnable {
 
     private void readAndNotifyMeasurement(ConfigDTO currentConfig) throws Exception {
         Measurement measurement;
+        Map<DerivateResistance, Double> resistanceDerivator=null;
+        Map<DerivateCapacitance, Double> capacitanceDerivator=null;
+        Map<DerivateInductance, Double> inductanceDerivator=null;
+        Map<DerivateImpedance, Double> impedanceDerivator=null;
         // Lock to avoid simultaneous commands on the serial port
         synchronized (serialLock) {
             measurement = meterBusiness.meter.fetch();
@@ -131,7 +135,32 @@ public class MeasurementBusiness implements Runnable {
         if (unitA.equals("Ω") && Math.abs(valueA) >= MAX_RESISTANCE_LIMIT) {
             displayValueA = "OL";
         }
-        MeasurementDTO dto = new MeasurementDTO(typeAStr, displayValueA, typeBStr, displayValueB);
+
+        switch (currentConfig.getPrimaryMeasurement().toString()){
+            case "R":
+               resistanceDerivator=ResistanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
+                break;
+            case "C":
+               capacitanceDerivator= CapacitanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
+                break;
+            case "L":
+                 inductanceDerivator=InductanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
+                break;
+            case "Z":
+                 impedanceDerivator= ImpedanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
+                break;
+
+        }
+        MeasurementDTO dto = new MeasurementDTO(
+                currentConfig.getPrimaryMeasurement().toString(),
+                typeAStr,
+                displayValueA,
+                typeBStr,
+                displayValueB,
+                resistanceDerivator,
+                capacitanceDerivator,
+                inductanceDerivator,
+                impedanceDerivator);
         for (MeasurementObserver observer : observers) {
             observer.onMeasurementReceived(dto);
         }
