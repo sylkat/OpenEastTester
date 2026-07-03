@@ -9,6 +9,8 @@ import et431.business.MeasurementBusiness;
 import et431.business.MeterBusiness;
 import et431.observer.MeasurementObserver;
 
+import javax.swing.*;
+
 /**
  * Main controller handling UI interactions and driving the LCR meter business logic.
  */
@@ -30,25 +32,37 @@ public class MeterController {
         }
     }
 
-    public void connectButtonPressed(String selectedPort) {
+    public boolean connectButtonPressed(String selectedPort) {
         if (meterBusiness.meter == null || !meterBusiness.meter.isConnected()) {
-            connect(selectedPort);
+            if(connect(selectedPort)){
+                return true;
+            }else{
+                return false;
+            }
+
         } else {
             disconnect();
+            return true;
         }
     }
 
-    private void connect(String port) {
+    private boolean connect(String port) {
         try {
             meterBusiness.connect(port);
             boolean connected = meterBusiness.meter.isConnected();
+            if (!connected) {
+                return false;
+            }
             DeviceInfo info = meterBusiness.meter.getDeviceInfo();
+            Thread.sleep(500);
             meterView.updateConnectionState(connected, info.getModel(), info.getFirmware(), port);
             measurementBusiness.startMeasurementTimer();
+            return true;
         } catch (Exception ex) {
             System.err.println("Failed to establish connection on port " + port + ": " + ex.getMessage());
             ex.printStackTrace();
         }
+        return false;
     }
 
     private void disconnect() {
