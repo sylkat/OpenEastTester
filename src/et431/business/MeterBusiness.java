@@ -8,7 +8,8 @@ public class MeterBusiness {
         try {
             meter = new ET431(port);
             meter.connect();
-            //System.out.println("Connected!");
+            System.out.println("Connected!");
+            Thread.sleep(200);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
