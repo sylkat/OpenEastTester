@@ -135,7 +135,16 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
             String selectedPort = (String) configurationPanel.getPortComboBox().getSelectedItem();
             boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect Instrument");
 
-            meterController.connectButtonPressed(selectedPort);
+            if(!meterController.connectButtonPressed(selectedPort)){
+                JOptionPane.showMessageDialog(
+                        this, // O 'meterView' si 'this' no es un componente gráfico
+                        "Could not establish a connection with the LCR meter on port " + selectedPort + ".\n" +
+                                "Please verify the cable connection, make sure the device is ON, and try again.",
+                        "Connection Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
 
             // Push full UI configuration block down to the meter upon establishing initial connection
             if (checkingConnectAction) {
