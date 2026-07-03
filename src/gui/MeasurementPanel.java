@@ -18,7 +18,6 @@ public class MeasurementPanel extends JPanel {
     private JLabel lblSecondaryName;
     private JLabel lblSecondaryValue;
 
-    private JLabel lblIndicatorBadge;
     private JLabel lblComponentIcon; // Component graphic placeholder label
 
     // --- HIGH-CONTRAST TECH PALETTE (Unified with InfoPanel) ---
@@ -63,13 +62,6 @@ public class MeasurementPanel extends JPanel {
         JPanel pnlRightGroup = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         pnlRightGroup.setOpaque(false);
 
-        lblIndicatorBadge = new JLabel("  READY  ");
-        lblIndicatorBadge.setFont(new Font("SansSerif", Font.BOLD, 11));
-        lblIndicatorBadge.setForeground(Color.WHITE);
-        lblIndicatorBadge.setOpaque(true);
-        lblIndicatorBadge.setBackground(TEXT_MUTED);
-        lblIndicatorBadge.setBorder(BorderFactory.createLineBorder(TEXT_MUTED, 2, true));
-        pnlRightGroup.add(lblIndicatorBadge); // Añadido primero (Izquierda dentro del grupo)
 
         lblComponentIcon = new JLabel();
         lblComponentIcon.setIcon(null); // Default placeholder (Z)
@@ -124,28 +116,7 @@ public class MeasurementPanel extends JPanel {
 
         updateComponentGraphic(name);
 
-        if (value.equals("OL")) {
-            lblIndicatorBadge.setText("  OPEN / OL  ");
-            lblIndicatorBadge.setBackground(BADGE_WARN);
-        } else {
-            try {
-                String clean = value.replaceAll("[^0-9.-]", "");
-                if (!clean.isEmpty()) {
-                    double val = Math.abs(Double.parseDouble(clean));
-                    if (val <= 1.0 && (name.equals("R") || name.equals("DCR"))) {
-                        lblIndicatorBadge.setText("   PASS   ");
-                        lblIndicatorBadge.setBackground(BADGE_OK);
-                    } else {
-                        lblIndicatorBadge.setText("  MEASURE  ");
-                        lblIndicatorBadge.setBackground(new Color(0, 123, 255));
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Primary value parsing error: " + e.getMessage());
-                lblIndicatorBadge.setText("  SIGNAL  ");
-                lblIndicatorBadge.setBackground(TEXT_MUTED);
-            }
-        }
+
     }
 
     public void setSecondary(String name, String value) {
@@ -158,8 +129,6 @@ public class MeasurementPanel extends JPanel {
         lblPrimaryValue.setText("-----");
         lblSecondaryName.setText("SECONDARY");
         lblSecondaryValue.setText("-----");
-        lblIndicatorBadge.setText("  READY  ");
-        lblIndicatorBadge.setBackground(TEXT_MUTED);
         lblComponentIcon.setIcon(new ComponentIcon("Z", COLOR_PRIMARY));
     }
 

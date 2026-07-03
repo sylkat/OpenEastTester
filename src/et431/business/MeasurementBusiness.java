@@ -127,9 +127,9 @@ public class MeasurementBusiness implements Runnable {
             unitA = detectPrimaryAutoUnit(valueA);
         }
         String displayValueA = ValueFormatter.formatSI(Math.abs(valueA), unitA);
-        String displayValueB = ValueFormatter.formatSI(Math.abs(valueB), unitB);
+        String displayValueB = ValueFormatter.formatSI(valueB, unitB);
         if(currentConfig.getSecondaryMeasurement().equals(SecondaryParameter.D)){
-            displayValueB=Math.abs(valueB)+"";
+            displayValueB=valueB+"";
         }
         // Overload handling for values exceeding limits
         if (unitA.equals("Ω") && Math.abs(valueA) >= MAX_RESISTANCE_LIMIT) {

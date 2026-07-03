@@ -27,13 +27,13 @@ public final class Constants {
     public static final String[] labelsCapacitance = {
             "ESR (Ω)",       "Reactance (X)",
             "Impedance (Z)", "Phase Angle (θ)",
-            "Quality (Q)",   "Empty Slot"
+            "Quality (Q)",   ""
     };
 
     public static final String[] labelsInductance = {
             "ESR (Ω)",       "Reactance (X)",
             "Impedance (Z)", "Phase Angle (θ)",
-            "Loss Factor (D)","Empty Slot"
+            "Loss Factor (D)",""
     };
 
     public static final String[] labelsImpedance = {
