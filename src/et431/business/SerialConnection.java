@@ -15,7 +15,7 @@ public class SerialConnection {
     public SerialConnection(String portName) {
         port = SerialPort.getCommPort(portName);
         // Default hardware configuration parameters
-        port.setBaudRate(115200);
+        port.setBaudRate(9600);
         port.setNumDataBits(8);
         port.setNumStopBits(SerialPort.ONE_STOP_BIT);
         port.setParity(SerialPort.NO_PARITY);
@@ -24,8 +24,22 @@ public class SerialConnection {
     }
 
     public void connect() throws ET431Exception {
-        if (!port.openPort()) {
-            throw new ET431Exception("Unable to open serial port.");
+        try {
+            if (!port.openPort()) {
+                System.out.println("Failed to open port: " + port.getPortDescription() + " waiting for another attempt...");
+                Thread.sleep(500);
+                if (!port.openPort()) {
+                    throw new ET431Exception("Unable to open serial port.");
+                }
+            }
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new ET431Exception("Connection attempt was interrupted: " + ie.getMessage());
+        } catch (Exception e) {
+            if (e instanceof ET431Exception) {
+                throw (ET431Exception) e;
+            }
+            throw new ET431Exception("Serial port error: " + e.getMessage());
         }
     }
 
