@@ -13,17 +13,27 @@ public class DisplayFormatter {
 
         String token = displayLabel.trim().toUpperCase();
 
-        return switch (token) {
-            case "R"   -> LABEL_RESISTANCE;
-            case "C"   -> LABEL_CAPACITANCE;
-            case "L"   -> LABEL_INDUCTANCE;
-            case "Z"   -> LABEL_IMPEDANCE;
-            case "X"   -> LABEL_REACTANCE;
-            case "D"   -> LABEL_LOSS_FACTOR;
-            case "Q"   -> LABEL_QUALITY_FACTOR;
-            case "THR" -> LABEL_PHASE_ANGLE;
-            case "ESR" -> LABEL_ESR;
-            default    -> displayLabel;
-        };
+        switch (token) {
+            case "R":
+                return LABEL_RESISTANCE;
+            case "C":
+                return LABEL_CAPACITANCE;
+            case "L":
+                return LABEL_INDUCTANCE;
+            case "Z":
+                return LABEL_IMPEDANCE;
+            case "X":
+                return LABEL_REACTANCE;
+            case "D":
+                return LABEL_LOSS_FACTOR;
+            case "Q":
+                return LABEL_QUALITY_FACTOR;
+            case "THR":
+                return LABEL_PHASE_ANGLE;
+            case "ESR":
+                return LABEL_ESR;
+            default:
+                return displayLabel;
+        }
     }
 }
