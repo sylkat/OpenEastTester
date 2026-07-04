@@ -2,9 +2,10 @@ package et431.enums;
 
 public enum Aperture {
     FAST("FAST"),
+    NORM("NORM"),
     MED("MEDium"),
-    SLOW("SLOW");
-
+    SLOW("SLOW"),
+    SLOW2("SLOW2");
     private final String command;
 
     Aperture(String command) {
