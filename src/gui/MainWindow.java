@@ -66,8 +66,9 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
 
         JPanel centerContainer = new JPanel(new BorderLayout(10, 0));
         centerContainer.setOpaque(false);
-        centerContainer.add(measurementPanel, BorderLayout.CENTER);
-        centerContainer.add(derivedPanel, BorderLayout.EAST);
+        centerContainer.add(measurementPanel, BorderLayout.WEST);
+        centerContainer.add(derivedPanel, BorderLayout.CENTER);
+        measurementPanel.setPreferredSize(new Dimension(400, 0));
 
         add(configurationPanel, BorderLayout.EAST);
         add(statusBar, BorderLayout.SOUTH);
@@ -169,7 +170,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
 
     @Override
     public void onMeasurementReceived(MeasurementDTO dto) {
-        measurementPanel.setPrimary(dto.getTypeA(), dto.getValueA());
+        measurementPanel.setPrimary(dto.getTypeA()+" ("+dto.getSeriesMode()+")", dto.getValueA());
         measurementPanel.setSecondary(dto.getTypeB(), dto.getValueB());
         derivedPanel.updateDisplay(dto);
     }

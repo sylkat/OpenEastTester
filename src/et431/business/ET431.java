@@ -142,8 +142,8 @@ public class ET431 {
     public SeriesMode getSeriesMode() throws Exception {
         String value = serial.execute("FUNC:IMP:EQU?");
         if (value.startsWith("SER"))
-            return SeriesMode.SER;
-        return SeriesMode.PAL;
+            return SeriesMode.Series;
+        return SeriesMode.Parallel;
     }
 
     public void setSeriesMode(SeriesMode mode) throws Exception {

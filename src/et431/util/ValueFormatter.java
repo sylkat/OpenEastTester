@@ -67,8 +67,8 @@ public final class ValueFormatter {
         }
         String result = FORMAT.format(value);
         if (unit == null || unit.isEmpty()) {
-            return prefix.isEmpty() ? result : result + " " + prefix;
+            return prefix.isEmpty() ? result : result + "" + prefix;
         }
-        return prefix.isEmpty() ? result + " " + unit : result + " " + prefix + unit;
+        return prefix.isEmpty() ? result + "" + unit : result + "" + prefix + unit;
     }
 }

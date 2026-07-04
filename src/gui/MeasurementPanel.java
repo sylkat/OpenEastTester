@@ -74,7 +74,7 @@ public class MeasurementPanel extends JPanel {
         lblPrimaryValue = new JLabel("-----");
         lblPrimaryValue.setFont(fontPrimaryValue);
         lblPrimaryValue.setForeground(COLOR_PRIMARY);
-        lblPrimaryValue.setHorizontalAlignment(SwingConstants.LEFT);
+        lblPrimaryValue.setHorizontalAlignment(SwingConstants.RIGHT);
         pnlPrimaryLCD.add(lblPrimaryValue, BorderLayout.CENTER);
 
         // --- SECONDARY DISPLAY ---
@@ -89,7 +89,7 @@ public class MeasurementPanel extends JPanel {
         lblSecondaryValue = new JLabel("-----");
         lblSecondaryValue.setFont(fontSecondaryValue);
         lblSecondaryValue.setForeground(COLOR_SECONDARY);
-        lblSecondaryValue.setHorizontalAlignment(SwingConstants.LEFT);
+        lblSecondaryValue.setHorizontalAlignment(SwingConstants.RIGHT);
         pnlSecondaryLCD.add(lblSecondaryValue, BorderLayout.CENTER);
 
         pnlDisplayContainer.add(pnlPrimaryLCD);

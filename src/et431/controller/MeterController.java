@@ -203,7 +203,7 @@ public class MeterController {
                     }
 
                     if (configBusiness.getCurrentConfig() != null) {
-
+                        configBusiness.getCurrentConfig().setSeriesMode(mode);
                     }
                 }
             } catch (Exception ex) {

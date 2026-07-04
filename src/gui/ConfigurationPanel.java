@@ -299,7 +299,8 @@ public class ConfigurationPanel extends JPanel {
                 (SecondaryParameter) getSecondaryComboBox().getSelectedItem(),
                 getAutoRangeCheckBox().isSelected(),
                 (Range) getRangeComboBox().getSelectedItem(),
-                (BiasVoltage) getBiasComboBox().getSelectedItem()
+                (BiasVoltage) getBiasComboBox().getSelectedItem(),
+                (SeriesMode) getSeriesModeComboBox().getSelectedItem()
         );
     }
 

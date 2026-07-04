@@ -97,7 +97,7 @@ public class Test {
 
             System.out.println("Mode : " + meter.getSeriesMode());
 
-            meter.setSeriesMode(SeriesMode.SER);
+            meter.setSeriesMode(SeriesMode.Series);
 
             System.out.println("Mode : " + meter.getSeriesMode());
             System.out.println();

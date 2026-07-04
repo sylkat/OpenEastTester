@@ -92,12 +92,13 @@ public class MeasurementBusiness implements Runnable {
             PrimaryParameter prim = meterBusiness.meter.getPrimaryParameter();
             SecondaryParameter sec = meterBusiness.meter.getSecondaryParameter();
             boolean autoRange = meterBusiness.meter.isAutoRange();
+            SeriesMode seriesMode= meterBusiness.meter.getSeriesMode();
             Range range = null;
             if(!autoRange){
                  range = meterBusiness.meter.getRange();
             }
             BiasVoltage bias = meterBusiness.meter.getBiasVoltage();
-            ConfigDTO hardwareConfig = new ConfigDTO(freq, volt, aper, prim, sec, autoRange, range, bias);
+            ConfigDTO hardwareConfig = new ConfigDTO(freq, volt, aper, prim, sec, autoRange, range, bias,seriesMode);
             configBusiness.setConfiguration(hardwareConfig);
             for (MeasurementObserver observer : observers) {
                 observer.updateUIFromConfig(hardwareConfig);
@@ -157,6 +158,7 @@ public class MeasurementBusiness implements Runnable {
                 displayValueA,
                 typeBStr,
                 displayValueB,
+                currentConfig.getSeriesMode(),
                 resistanceDerivator,
                 capacitanceDerivator,
                 inductanceDerivator,

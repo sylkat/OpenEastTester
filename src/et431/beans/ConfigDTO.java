@@ -11,10 +11,11 @@ public class ConfigDTO {
     private  boolean autoRange;
     private  Range range;
     private  BiasVoltage bias;
+    private  SeriesMode seriesMode;
 
     public ConfigDTO(Frequency frequency, Voltage voltage, Aperture aperture,
                      PrimaryParameter primaryMeasurement, SecondaryParameter secondaryMeasurement,
-                     boolean autoRange, Range range, BiasVoltage bias) {
+                     boolean autoRange, Range range, BiasVoltage bias, SeriesMode seriesMode) {
         this.frequency = frequency;
         this.voltage = voltage;
         this.aperture = aperture;
@@ -23,6 +24,7 @@ public class ConfigDTO {
         this.autoRange = autoRange;
         this.range = range;
         this.bias = bias;
+        this.seriesMode = seriesMode;
     }
 
     public Frequency getFrequency() { return frequency; }
@@ -33,6 +35,10 @@ public class ConfigDTO {
     public boolean isAutoRange() { return autoRange; }
     public Range getRange() { return range; }
     public BiasVoltage getBias() { return bias; }
+
+    public SeriesMode getSeriesMode() {
+        return seriesMode;
+    }
 
     public void setFrequency(Frequency frequency) {
         this.frequency = frequency;
@@ -64,5 +70,9 @@ public class ConfigDTO {
 
     public void setBias(BiasVoltage bias) {
         this.bias = bias;
+    }
+
+    public void setSeriesMode(SeriesMode seriesMode) {
+        this.seriesMode = seriesMode;
     }
 }
