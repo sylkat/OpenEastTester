@@ -23,8 +23,8 @@ public class MeasurementPanel extends JPanel {
     // --- HIGH-CONTRAST TECH PALETTE (Unified with InfoPanel) ---
     private final Color BG_PANEL = new Color(17, 24, 39);          // Deep Dark Slate
     private final Color BG_LCD = new Color(13, 16, 23);            // Deep Black/Slate for LCD
-    private final Color COLOR_PRIMARY = new Color(0, 255, 204);    // Cyan
-    private final Color COLOR_SECONDARY = new Color(255, 170, 0);  // Orange
+    private final Color COLOR_SECONDARY = new Color(0, 255, 204);    // Cyan
+    private final Color COLOR_PRIMARY = new Color(255, 170, 0);  // Orange
     private final Color TEXT_MUTED = new Color(156, 163, 175);     // Muted Gray for Labels
     private final Color COMPONENT = new Color(218, 255, 0);
     private final Color BADGE_OK = new Color(40, 167, 69);
