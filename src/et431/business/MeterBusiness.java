@@ -3,28 +3,26 @@ package et431.business;
 import et431.beans.DeviceInfo;
 import et431.enums.*;
 
+import static et431.enums.SupportedMeter.*;
+
 public class MeterBusiness {
     public LcrMeter meter;
 
-    public void connect(String port) {
+    public void connect(String port, SupportedMeter selectedModel) {
         try {
-            meter = new ET431(port);
-            meter.connect();
-            Thread.sleep(400);
-            DeviceInfo response = meter.getDeviceInfo();
-            if (response.getManufacturer().toUpperCase().contains("HIOKI")) {
-                Thread.sleep(400);
-                meter.disconnect();
-                Thread.sleep(500);
-                meter = new HiokiMeter(port);
-                meter.connect();
-            }
-            if (response.getManufacturer().toUpperCase().contains("TONGHUI")) {
-                Thread.sleep(400);
-                meter.disconnect();
-                Thread.sleep(500);
-                meter = new TonghuiMeter(port);
-                meter.connect();
+            switch (selectedModel) {
+                case EAST_TESTER:
+                    meter = new ET431(port);
+                    meter.connect();
+                    break;
+                case HIOKI:
+                    meter = new HiokiMeter(port);
+                    meter.connect();
+                    break;
+                case TONGHUI:
+                    meter = new TonghuiMeter(port);
+                    meter.connect();
+                    break;
             }
             System.out.println("Connected!");
             Thread.sleep(200);

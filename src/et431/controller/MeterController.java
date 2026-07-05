@@ -32,9 +32,9 @@ public class MeterController {
         }
     }
 
-    public boolean connectButtonPressed(String selectedPort) {
+    public boolean connectButtonPressed(String selectedPort,SupportedMeter selectedModel) {
         if (meterBusiness.meter == null || !meterBusiness.meter.isConnected()) {
-            if(connect(selectedPort)){
+            if(connect(selectedPort,selectedModel)){
                 return true;
             }else{
                 return false;
@@ -46,9 +46,9 @@ public class MeterController {
         }
     }
 
-    private boolean connect(String port) {
+    private boolean connect(String port,SupportedMeter selectedModel) {
         try {
-            meterBusiness.connect(port);
+            meterBusiness.connect(port,selectedModel);
             boolean connected = meterBusiness.meter.isConnected();
             if (!connected) {
                 return false;
