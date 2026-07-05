@@ -19,6 +19,13 @@ public class MeterBusiness {
                 meter = new HiokiMeter(port);
                 meter.connect();
             }
+            if (response.getManufacturer().toUpperCase().contains("TONGHUI")) {
+                Thread.sleep(400);
+                meter.disconnect();
+                Thread.sleep(500);
+                meter = new TonghuiMeter(port);
+                meter.connect();
+            }
             System.out.println("Connected!");
             Thread.sleep(200);
         } catch (Exception ex) {
