@@ -15,6 +15,7 @@ import java.awt.event.ItemEvent;
  */
 public class ConfigurationPanel extends JPanel {
 
+    private JComboBox<SupportedMeter> cmbModel; // <-- Nuevo Combo Box para los modelos soportados
     private JComboBox<String> cmbPort;
     private JButton btnConnect;
     private JButton btnApply;
@@ -65,16 +66,38 @@ public class ConfigurationPanel extends JPanel {
         JPanel pnlConnection = new JPanel(new GridBagLayout());
         styleSubPanel(pnlConnection, "PORT CONNECTION");
         GridBagConstraints gbcConn = createDefaultGbc();
+        int connRow = 0;
 
-        addLabel(pnlConnection, "Serial Port:", gbcConn, 0);
+        // --- NUEVO: Selección de Modelo (Enum SupportedMeter) ---
+        addLabel(pnlConnection, "Meter Model:", gbcConn, connRow);
+        cmbModel = new JComboBox<>(SupportedMeter.values());
+        // Custom cell renderer opcional para mostrar el displayName del Enum de forma limpia
+        cmbModel.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof SupportedMeter) {
+                    setText(((SupportedMeter) value).getDisplayName());
+                }
+                return this;
+            }
+        });
+        styleComponent(cmbModel);
+        pnlConnection.add(cmbModel, gbcConn);
+        connRow++;
+
+        // Puerto Serial
+        addLabel(pnlConnection, "Serial Port:", gbcConn, connRow);
         cmbPort = new JComboBox<>();
         for (SerialPort port : SerialPort.getCommPorts()) {
             cmbPort.addItem(port.getSystemPortName());
         }
         styleComponent(cmbPort);
         pnlConnection.add(cmbPort, gbcConn);
+        connRow++;
 
-        gbcConn.gridx = 0; gbcConn.gridy = 1; gbcConn.gridwidth = 2;
+        // Botón de conectar
+        gbcConn.gridx = 0; gbcConn.gridy = connRow; gbcConn.gridwidth = 2;
         gbcConn.insets = new Insets(10, 4, 4, 4);
         btnConnect = new JButton("Connect");
         styleButton(btnConnect, BTN_CONNECT_BG, Color.WHITE);
@@ -272,6 +295,7 @@ public class ConfigurationPanel extends JPanel {
     }
 
     // --- GETTERS ---
+    public JComboBox<SupportedMeter> getModelComboBox() { return cmbModel; } // <-- Nuevo Getter
     public JButton getToggleCollapseButton() { return btnToggleCollapse; }
     public JComboBox<String> getPortComboBox() { return cmbPort; }
     public JButton getConnectButton() { return btnConnect; }
@@ -328,4 +352,3 @@ public class ConfigurationPanel extends JPanel {
         }
     }
 }
-
