@@ -56,6 +56,9 @@ public class SerialConnection {
     // Al añadir 'synchronized', si el hilo de fetch() o el de sincronización
 // entran aquí, bloquearán el método de forma exclusiva hasta que retorne la respuesta.
     public synchronized String execute(String command) throws Exception {
+        if(!isConnected()){
+            throw new ET431Exception("Disconnected!: " + command);
+        }
         flush(); // Clear any stale bytes before transmitting
         byte[] tx = (command + "\n").getBytes(StandardCharsets.US_ASCII);
         int written = port.writeBytes(tx, tx.length);
