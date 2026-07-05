@@ -5,6 +5,8 @@ import et431.enums.*;
 import java.util.Map;
 
 public class MeasurementDTO {
+    private final String realValueA;
+    private final String realValueB;
     private final String measureType;
     private final String typeA;
     private final String valueA;
@@ -16,7 +18,9 @@ public class MeasurementDTO {
     private final Map<DerivateInductance, Double> inductanceDerivator;
     private final Map<DerivateImpedance, Double> impedanceDerivator;
 
-    public MeasurementDTO(String measureType,
+    public MeasurementDTO(String realValueA,
+                          String realValueB,
+                          String measureType,
                           String typeA,
                           String valueA,
                           String typeB,
@@ -26,6 +30,8 @@ public class MeasurementDTO {
                           Map<DerivateCapacitance, Double> capacitanceDerivator,
                           Map<DerivateInductance, Double> inductanceDerivator,
                           Map<DerivateImpedance, Double> impedanceDerivator) {
+        this.realValueA=realValueA;
+        this.realValueB=realValueB;
         this.measureType=measureType;
         this.typeA = typeA;
         this.valueA = valueA;
@@ -37,6 +43,14 @@ public class MeasurementDTO {
         this.inductanceDerivator=inductanceDerivator;
         this.impedanceDerivator=impedanceDerivator;
     }
+
+    public String getRealValueA() {
+        return realValueA;
+    }
+    public String getRealValueB() {
+        return realValueB;
+    }
+
     public String getMeasureType() { return measureType; }
     public String getTypeA() { return typeA; }
     public String getValueA() { return valueA; }

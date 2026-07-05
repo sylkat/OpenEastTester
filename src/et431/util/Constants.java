@@ -2,9 +2,11 @@ package et431.util;
 
 public final class Constants {
 
+
+
     // Ocultar constructor para evitar instanciación de clase de utilidades
     private Constants() {}
-
+    public static final int DEBUG = 1;
     // --- LCR DISPLAY LABELS ---
     public static final String LABEL_RESISTANCE    = "(R) Resistance";
     public static final String LABEL_CAPACITANCE   = "(C) Capacitance";

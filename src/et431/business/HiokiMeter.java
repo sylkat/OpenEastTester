@@ -232,7 +232,7 @@ public class HiokiMeter implements LcrMeter {
     // -------------------------------------------------------
     @Override
     public SeriesMode getSeriesMode() throws Exception {
-        return SeriesMode.Series;
+        return SeriesMode.SER;
     }
 
     @Override

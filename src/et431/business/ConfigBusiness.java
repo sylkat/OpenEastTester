@@ -17,7 +17,7 @@ public class ConfigBusiness {
         return currentConfig;
     }
 
-    public void applyConfig(ET431 meter) {
+    public void applyConfig(LcrMeter meter) {
         if (meter == null || currentConfig == null) return;
         try {
             // Required delays for the hardware to process each command

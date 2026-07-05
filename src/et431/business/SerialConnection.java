@@ -15,7 +15,7 @@ public class SerialConnection {
     public SerialConnection(String portName) {
         port = SerialPort.getCommPort(portName);
         // Default hardware configuration parameters
-        port.setBaudRate(9600);
+        port.setBaudRate(115200);
         port.setNumDataBits(8);
         port.setNumStopBits(SerialPort.ONE_STOP_BIT);
         port.setParity(SerialPort.NO_PARITY);
@@ -53,7 +53,9 @@ public class SerialConnection {
         return port.isOpen();
     }
 
-    public String execute(String command) throws Exception {
+    // Al añadir 'synchronized', si el hilo de fetch() o el de sincronización
+// entran aquí, bloquearán el método de forma exclusiva hasta que retorne la respuesta.
+    public synchronized String execute(String command) throws Exception {
         flush(); // Clear any stale bytes before transmitting
         byte[] tx = (command + "\n").getBytes(StandardCharsets.US_ASCII);
         int written = port.writeBytes(tx, tx.length);
@@ -77,7 +79,6 @@ public class SerialConnection {
         }
         return response;
     }
-
     private void flush() {
         byte[] buffer = new byte[256];
         while (port.bytesAvailable() > 0) {

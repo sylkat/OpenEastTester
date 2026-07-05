@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static et431.util.Constants.LABEL_RESISTANCE;
+
 /**
  * Background worker that continuously polls data and syncs config from the LCR meter.
  */
@@ -57,10 +59,6 @@ public class MeasurementBusiness implements Runnable {
         int cycleCount = 0;
         while (running) {
             try {
-                if (System.currentTimeMillis() < pauseUntil) {
-                    Thread.sleep(500);
-                    continue;
-                }
                 if (meterBusiness.meter != null && meterBusiness.meter.isConnected()) {
                     // Periodic sync to make sure UI and hardware stay matching
                     if (cycleCount % CONFIG_SYNC_INTERVAL == 0) {
@@ -72,40 +70,48 @@ public class MeasurementBusiness implements Runnable {
                     }
                 }
                 cycleCount++;
-                Thread.sleep(200); // Polling rate delay
+                Thread.sleep(100); // Polling rate delay
+                System.out.println("One fetch");
             } catch (InterruptedException e) {
                 System.err.println("Measurement thread interrupted: " + e.getMessage());
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception ex) {
-                System.err.println("Error in measurement loop: " + ex.getMessage());
+                if(Constants.DEBUG>3)
+                    System.err.println("Error in measurement loop: " + ex.getMessage());
                 ex.printStackTrace();
             }
         }
     }
 
     private void syncConfigFromHardware() {
-        try {
-            Frequency freq = meterBusiness.meter.getFrequency();
-            Voltage volt = meterBusiness.meter.getVoltage();
-            Aperture aper = meterBusiness.meter.getAperture();
-            PrimaryParameter prim = meterBusiness.meter.getPrimaryParameter();
-            SecondaryParameter sec = meterBusiness.meter.getSecondaryParameter();
-            boolean autoRange = meterBusiness.meter.isAutoRange();
-            SeriesMode seriesMode= meterBusiness.meter.getSeriesMode();
-            Range range = null;
-            if(!autoRange){
-                 range = meterBusiness.meter.getRange();
+        Thread syncThread = new Thread(() -> {
+            try {
+                System.out.println("REquest Info Device.");
+                Frequency freq = meterBusiness.meter.getFrequency();
+                Voltage volt = meterBusiness.meter.getVoltage();
+                Aperture aper = meterBusiness.meter.getAperture();
+                PrimaryParameter prim = meterBusiness.meter.getPrimaryParameter();
+                SecondaryParameter sec = meterBusiness.meter.getSecondaryParameter();
+                boolean autoRange = meterBusiness.meter.isAutoRange();
+                SeriesMode seriesMode = meterBusiness.meter.getSeriesMode();
+                Range range = null;
+                if (!autoRange) {
+                    range = meterBusiness.meter.getRange();
+                }
+                BiasVoltage bias = meterBusiness.meter.getBiasVoltage();
+                ConfigDTO hardwareConfig = new ConfigDTO(freq, volt, aper, prim, sec, autoRange, range, bias, seriesMode);
+                configBusiness.setConfiguration(hardwareConfig);
+                for (MeasurementObserver observer : observers) {
+                    observer.updateUIFromConfig(hardwareConfig);
+                }
+            } catch (Exception e) {
+                if (Constants.DEBUG > 3)
+                    System.err.println("Failed to sync configuration from hardware: " + e.getMessage());
             }
-            BiasVoltage bias = meterBusiness.meter.getBiasVoltage();
-            ConfigDTO hardwareConfig = new ConfigDTO(freq, volt, aper, prim, sec, autoRange, range, bias,seriesMode);
-            configBusiness.setConfiguration(hardwareConfig);
-            for (MeasurementObserver observer : observers) {
-                observer.updateUIFromConfig(hardwareConfig);
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to sync configuration from hardware: " + e.getMessage());
-        }
+        });
+        // Arrancamos el hilo
+        syncThread.start();
     }
 
     private void readAndNotifyMeasurement(ConfigDTO currentConfig) throws Exception {
@@ -127,7 +133,11 @@ public class MeasurementBusiness implements Runnable {
         if (typeAStr.equals("AUTO")) {
             unitA = detectPrimaryAutoUnit(valueA);
         }
-        String displayValueA = ValueFormatter.formatSI(Math.abs(valueA), unitA);
+        String displayValueA = ValueFormatter.formatSI(valueA, unitA);
+        if (typeAStr.startsWith(LABEL_RESISTANCE)) {
+            displayValueA = ValueFormatter.formatSI(Math.abs(valueA), unitA);
+        }
+
         String displayValueB = ValueFormatter.formatSI(valueB, unitB);
         if(currentConfig.getSecondaryMeasurement().equals(SecondaryParameter.D)){
             displayValueB=valueB+"";
@@ -153,6 +163,8 @@ public class MeasurementBusiness implements Runnable {
 
         }
         MeasurementDTO dto = new MeasurementDTO(
+                valueA+"",
+                valueB+"",
                 currentConfig.getPrimaryMeasurement().toString(),
                 typeAStr,
                 displayValueA,

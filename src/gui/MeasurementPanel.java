@@ -135,20 +135,15 @@ public class MeasurementPanel extends JPanel {
     private void updateComponentGraphic(String name) {
         if (name == null) return;
         String token = name;
-
-        switch (token) {
-            case "AUTO":
-                lblComponentIcon.setIcon(null);
-                break;
-            case LABEL_CAPACITANCE:
-                lblComponentIcon.setIcon(new ComponentIcon("C", COMPONENT));
-                break;
-            case LABEL_INDUCTANCE:
-                lblComponentIcon.setIcon(new ComponentIcon("L", COMPONENT));
-                break;
-            default:
-                lblComponentIcon.setIcon(new ComponentIcon("R", COMPONENT));
-                break;
+        lblComponentIcon.setIcon(new ComponentIcon("R", COMPONENT));
+        if(name.startsWith("AUTO")){
+            lblComponentIcon.setIcon(null);
+        }
+        if(name.startsWith(LABEL_CAPACITANCE)){
+            lblComponentIcon.setIcon(new ComponentIcon("C", COMPONENT));
+        }
+        if(name.startsWith(LABEL_INDUCTANCE)){
+            lblComponentIcon.setIcon(new ComponentIcon("L", COMPONENT));
         }
     }
 

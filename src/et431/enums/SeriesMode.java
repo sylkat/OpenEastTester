@@ -2,8 +2,9 @@ package et431.enums;
 
 public enum SeriesMode {
 
-    Series("SERial"),
-    Parallel("PALlel");
+    SER("SERial"),
+    PAL("PALlel");
+
 
     private final String command;
 

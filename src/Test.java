@@ -97,7 +97,7 @@ public class Test {
 
             System.out.println("Mode : " + meter.getSeriesMode());
 
-            meter.setSeriesMode(SeriesMode.Series);
+            meter.setSeriesMode(SeriesMode.SER);
 
             System.out.println("Mode : " + meter.getSeriesMode());
             System.out.println();
@@ -127,17 +127,6 @@ public class Test {
             System.out.println();
 
             // -------------------------------------------------
-            // RELATIVE
-            // -------------------------------------------------
-
-            System.out.println("Relative : " + meter.getRelativeMode());
-
-            meter.setRelativeMode(RelativeMode.ON);
-
-            System.out.println("Relative : " + meter.getRelativeMode());
-            System.out.println();
-
-            // -------------------------------------------------
             // BIAS
             // -------------------------------------------------
 
@@ -146,17 +135,6 @@ public class Test {
             meter.setBiasVoltage(BiasVoltage.MV100);
 
             System.out.println("Bias : " + meter.getBiasVoltage());
-            System.out.println();
-
-            // -------------------------------------------------
-            // DISPLAY
-            // -------------------------------------------------
-
-            System.out.println("Display : " + meter.getDisplayPage());
-
-            meter.setDisplayPage(DisplayPage.MEAS);
-
-            System.out.println("Display : " + meter.getDisplayPage());
             System.out.println();
 
             meter.disconnect();

@@ -4,6 +4,7 @@ import et431.beans.DeviceInfo;
 import et431.ET431Exception;
 import et431.beans.Measurement;
 import et431.enums.*;
+import et431.util.Constants;
 
 public class ET431 implements LcrMeter {
 
@@ -58,8 +59,14 @@ public class ET431 implements LcrMeter {
     @Override
     public Measurement fetch() throws Exception {
         String response = serial.execute("FETCH?");
-        if (response == null)
-            throw new ET431Exception("Invalid measurement.");
+        if (response == null) {
+            if (Constants.DEBUG > 3) {
+                throw new ET431Exception("Invalid measurement.");
+            }
+            return new Measurement(
+                    Double.parseDouble("0"),
+                    Double.parseDouble("0"));
+        }
         String[] values = response.split(",");
         if (values.length != 2)
             throw new ET431Exception("Invalid measurement: " + response);
@@ -143,8 +150,8 @@ public class ET431 implements LcrMeter {
     public SeriesMode getSeriesMode() throws Exception {
         String value = serial.execute("FUNC:IMP:EQU?");
         if (value.startsWith("SER"))
-            return SeriesMode.Series;
-        return SeriesMode.Parallel;
+            return SeriesMode.SER;
+        return SeriesMode.PAL;
     }
     @Override
     public void setSeriesMode(SeriesMode mode) throws Exception {
