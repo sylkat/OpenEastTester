@@ -233,23 +233,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         configurationPanel.getBiasComboBox().addActionListener(comboListener);
 
         configurationPanel.getConnectButton().addActionListener(e -> {
-            String selectedPort = (String) configurationPanel.getPortComboBox().getSelectedItem();
-            boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect Instrument");
-
-            if(!meterController.connectButtonPressed(selectedPort)){
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Could not establish a connection with the LCR meter on port " + selectedPort + ".\n" +
-                                "Please verify the cable connection, make sure the device is ON, and try again.",
-                        "Connection Error",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            if (checkingConnectAction) {
-                setConfiguration();
-            }
+            onButtonConnect();
         });
 
         configurationPanel.getToggleCollapseButton().addActionListener(e -> {
@@ -257,6 +241,26 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
             revalidate();
             repaint();
         });
+    }
+
+    private void onButtonConnect(){
+        String selectedPort = (String) configurationPanel.getPortComboBox().getSelectedItem();
+        boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect Instrument");
+
+        if(!meterController.connectButtonPressed(selectedPort)){
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Could not establish a connection with the LCR meter on port " + selectedPort + ".\n" +
+                            "Please verify the cable connection, make sure the device is ON, and try again.",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        if (checkingConnectAction) {
+            setConfiguration();
+        }
     }
 
     private void setConfiguration() {
@@ -296,6 +300,10 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         SwingUtilities.invokeLater(() -> {
             configurationPanel.updateCombosWithoutTriggeringEvents(config);
         });
+    }
+    @Override
+    public void  onDisconnected() {
+        meterController.disconnect();
     }
 
     public static void main(String[] args) {
