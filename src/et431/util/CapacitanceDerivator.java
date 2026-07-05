@@ -19,7 +19,7 @@ public class CapacitanceDerivator {
         Map<DerivateCapacitance, Double> results = new EnumMap<>(DerivateCapacitance.class);
 
         // Avoid invalid or zero frequency/capacitance to prevent division by zero
-        if (frequency > 0 && c > 0) {
+        if (frequency > 0 && c != 0) {
             double angularFrequency = 2 * Math.PI * frequency;
 
             // 1. Capacitive Reactance (X) = -1 / (2 * pi * f * C)
