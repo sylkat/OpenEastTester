@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
 public class RealTimeChartPanel extends JPanel {
@@ -32,8 +33,8 @@ public class RealTimeChartPanel extends JPanel {
     private static final Color TEXT_LABEL     = new Color(156, 163, 175);  // Muted Gray para etiquetas secundarias
     private static final Color TEXT_PRIMARY   = new Color(243, 244, 246);  // Blanco limpio para textos principales
 
-    private static final Color ACCENT_1       = new Color(56, 189, 248);   // Azul cian del ACCENT_COLOR de DerivedPanel
-    private static final Color ACCENT_2       = new Color(236, 72, 153);   // Rosa/Magenta vibrante complementario para la línea 2
+    private static final Color ACCENT_1       =  new Color(255, 170, 0);
+    private static final Color ACCENT_2       = new Color(56, 189, 248);
     private static final Color BG_CARD_BUTTON = new Color(31, 41, 55);     // Tono gris de tarjetas para botones estilo blend
 
     private static final Font FONT_AXIS  = new Font("Segoe UI", Font.PLAIN, 12);
@@ -247,9 +248,14 @@ public class RealTimeChartPanel extends JPanel {
 
             series1.setMaximumItemCount(150);
             series2.setMaximumItemCount(150);
-
-            series1.addOrUpdate(now, parseEngineeringValue(dto.getRealValueA()));
-            series2.addOrUpdate(now, parseEngineeringValue(dto.getValueB()));
+            double valueA = Double.parseDouble(dto.getRealValueA());
+            double valueB = Double.parseDouble(dto.getRealValueB());
+            if(dto.getTypeA().equals(Constants.LABEL_RESISTANCE)
+                    || dto.getTypeA().equals(Constants.LABEL_IMPEDANCE )){
+                valueA=Math.abs(valueA);
+            }
+            series1.addOrUpdate(now, valueA);
+            series2.addOrUpdate(now, valueB);
 
             adjustSymmetricRange();
         });
@@ -288,7 +294,7 @@ public class RealTimeChartPanel extends JPanel {
         });
     }
 
-    public static double parseEngineeringValue(String rawValue) {
+    public static Double parseEngineeringValue(String rawValue) {
         if (rawValue == null || rawValue.trim().isEmpty()) {
             return 0.0;
         }
