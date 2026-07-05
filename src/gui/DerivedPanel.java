@@ -26,10 +26,11 @@ public class DerivedPanel extends JPanel {
 
     // --- HIGH-CONTRAST TECH PALETTE (Cloned from InfoPanel) ---
     private final Color BG_PANEL = new Color(17, 24, 39);         // Deep Dark Slate
-    private final Color TEXT_LABEL = new Color(156, 163, 175);     // Muted Gray for Labels
-
+   // private final Color TEXT_LABEL =new Color(56, 189, 248);
+    private final Color TEXT_LABEL = new Color(156, 163, 175);
+    private final Color COLOR_SECONDARY = new Color(255, 170, 0);  // Orange
     // Verde de Laboratorio de alta visibilidad (Bench Matrix Green)
-    private final Color TEXT_VALUE = new Color(34, 197, 94);       // Hex: #22C55E (Vibrant Laboratory Green)
+    private final Color TEXT_VALUE = new Color(255, 170, 0);       // Hex: #22C55E (Vibrant Laboratory Green)
 
     private final Color BORDER_COLOR = new Color(55, 65, 81);      // Subtle dark separator divider
 
@@ -60,12 +61,12 @@ public class DerivedPanel extends JPanel {
             block.setBorder(BorderFactory.createEmptyBorder(9, 6, 9, 6));
 
             valueLabels[i] = new JLabel("-");
-            valueLabels[i].setFont(new Font("Monospaced", Font.BOLD, 15));
+            valueLabels[i].setFont(new Font("Monospaced", Font.BOLD, 20));
             valueLabels[i].setForeground(TEXT_VALUE);
             valueLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
 
             tagLabels[i] = new JLabel("---");
-            tagLabels[i].setFont(new Font("SansSerif", Font.BOLD, 9));
+            tagLabels[i].setFont(new Font("SansSerif", Font.BOLD, 11));
             tagLabels[i].setForeground(TEXT_LABEL);
             tagLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -117,9 +118,13 @@ public class DerivedPanel extends JPanel {
 
         final String[] labels;
         final String[] values = new String[6];
-
+        //System.out.println("Second Primary type:"+ dto.getTypeB());
         switch (dto.getMeasureType()) {
             case "R":
+                if(!dto.getTypeB().startsWith(LABEL_REACTANCE)){
+                    labels = Constants.labelsAuto;
+                    break;
+                }
                 labels = Constants.labelsResistance;
                 if (dto.getResistanceDerivator() != null) {
                     Map<DerivateResistance, Double> map = dto.getResistanceDerivator();
@@ -133,6 +138,10 @@ public class DerivedPanel extends JPanel {
                 break;
 
             case "C":
+                if(!dto.getTypeB().startsWith(LABEL_LOSS_FACTOR)){
+                    labels = Constants.labelsAuto;
+                    break;
+                }
                 labels = Constants.labelsCapacitance;
                 if (dto.getCapacitanceDerivator() != null) {
                     Map<DerivateCapacitance, Double> map = dto.getCapacitanceDerivator();
@@ -146,6 +155,10 @@ public class DerivedPanel extends JPanel {
                 break;
 
             case "L":
+                if(!dto.getTypeB().startsWith(LABEL_QUALITY_FACTOR)){
+                    labels = Constants.labelsAuto;
+                    break;
+                }
                 labels = Constants.labelsInductance;
                 if (dto.getInductanceDerivator() != null) {
                     Map<DerivateInductance, Double> map = dto.getInductanceDerivator();
@@ -159,6 +172,10 @@ public class DerivedPanel extends JPanel {
                 break;
 
             case "Z":
+                if(!dto.getTypeB().startsWith(LABEL_REACTANCE)){
+                    labels = Constants.labelsAuto;
+                    break;
+                }
                 labels = Constants.labelsImpedance;
                 if (dto.getImpedanceDerivator() != null) {
                     Map<DerivateImpedance, Double> map = dto.getImpedanceDerivator();
@@ -194,6 +211,12 @@ public class DerivedPanel extends JPanel {
             revalidate();
             repaint();
         });
+    }
+
+    private void setValuesEmpty(String[] values, MeasurementDTO dto ){
+        for (int i = 0; i < 6;i++){
+            values[i] = "";
+        }
     }
 
     private String formatValue(Double value, String unit) {
