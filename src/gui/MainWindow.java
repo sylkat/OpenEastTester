@@ -245,9 +245,10 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
 
     private void onButtonConnect(){
         String selectedPort = (String) configurationPanel.getPortComboBox().getSelectedItem();
-        boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect Instrument");
+        SupportedMeter selectedModel= (SupportedMeter) configurationPanel.getModelComboBox().getSelectedItem();
+        boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect");
 
-        if(!meterController.connectButtonPressed(selectedPort)){
+        if(!meterController.connectButtonPressed(selectedPort,selectedModel)){
             JOptionPane.showMessageDialog(
                     this,
                     "Could not establish a connection with the LCR meter on port " + selectedPort + ".\n" +
@@ -279,7 +280,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
 
     @Override
     public void updateConnectionState(boolean isConnected, String model, String firmware, String portName) {
-        configurationPanel.getConnectButton().setText(isConnected ? "Disconnect" : "Connect Instrument");
+        configurationPanel.getConnectButton().setText(isConnected ? "Disconnect" : "Connect");
         statusBar.setStatus(isConnected ? "Connected" : "Disconnected");
         if (isConnected) {
             statusBar.setPort(portName);
