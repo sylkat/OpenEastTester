@@ -65,7 +65,7 @@ public class MeterController {
         return false;
     }
 
-    private void disconnect() {
+    public void disconnect() {
         if (meterBusiness.meter != null) {
             meterBusiness.meter.disconnect();
         }
