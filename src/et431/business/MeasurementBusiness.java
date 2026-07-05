@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static et431.util.Constants.LABEL_REACTANCE;
 import static et431.util.Constants.LABEL_RESISTANCE;
 
 /**
@@ -71,12 +72,24 @@ public class MeasurementBusiness implements Runnable {
                 }
                 cycleCount++;
                 Thread.sleep(100); // Polling rate delay
-                System.out.println("One fetch");
+               // System.out.println("One fetch");
             } catch (InterruptedException e) {
                 System.err.println("Measurement thread interrupted: " + e.getMessage());
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception ex) {
+                if(ex.getMessage().contains("Unable to send command: FETCH?")){
+                    if(!meterBusiness.meter.isConnected()){
+                        System.out.println("Meter is connected!");
+                    }else{
+                        for (MeasurementObserver observer : observers) {
+                            observer.onDisconnected();
+                        }
+                        System.out.println("Meter is not connected!");
+                        running=false;
+                        break;
+                    }
+                }
                 if(Constants.DEBUG>3)
                     System.err.println("Error in measurement loop: " + ex.getMessage());
                 ex.printStackTrace();
@@ -87,7 +100,7 @@ public class MeasurementBusiness implements Runnable {
     private void syncConfigFromHardware() {
         Thread syncThread = new Thread(() -> {
             try {
-                System.out.println("REquest Info Device.");
+                //System.out.println("REquest Info Device.");
                 Frequency freq = meterBusiness.meter.getFrequency();
                 Voltage volt = meterBusiness.meter.getVoltage();
                 Aperture aper = meterBusiness.meter.getAperture();
@@ -138,6 +151,8 @@ public class MeasurementBusiness implements Runnable {
             displayValueA = ValueFormatter.formatSI(Math.abs(valueA), unitA);
         }
 
+
+
         String displayValueB = ValueFormatter.formatSI(valueB, unitB);
         if(currentConfig.getSecondaryMeasurement().equals(SecondaryParameter.D)){
             displayValueB=valueB+"";
@@ -145,6 +160,9 @@ public class MeasurementBusiness implements Runnable {
         // Overload handling for values exceeding limits
         if (unitA.equals("Ω") && Math.abs(valueA) >= MAX_RESISTANCE_LIMIT) {
             displayValueA = "OL";
+        }
+        if (unitB.equals("Ω") && Math.abs(valueB) >= MAX_RESISTANCE_LIMIT) {
+            displayValueB = "OL";
         }
 
         switch (currentConfig.getPrimaryMeasurement().toString()){
@@ -171,6 +189,7 @@ public class MeasurementBusiness implements Runnable {
                 typeBStr,
                 displayValueB,
                 currentConfig.getSeriesMode(),
+                meterBusiness.meter.isConnected(),
                 resistanceDerivator,
                 capacitanceDerivator,
                 inductanceDerivator,

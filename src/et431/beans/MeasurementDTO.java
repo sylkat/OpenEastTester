@@ -13,11 +13,11 @@ public class MeasurementDTO {
     private final String typeB;
     private final String valueB;
     private final SeriesMode seriesMode;
+    private final Boolean connected;
     private final Map<DerivateResistance, Double> resistanceDerivator;
     private final Map<DerivateCapacitance, Double> capacitanceDerivator;
     private final Map<DerivateInductance, Double> inductanceDerivator;
     private final Map<DerivateImpedance, Double> impedanceDerivator;
-
     public MeasurementDTO(String realValueA,
                           String realValueB,
                           String measureType,
@@ -26,6 +26,7 @@ public class MeasurementDTO {
                           String typeB,
                           String valueB,
                           SeriesMode seriesMode,
+                          Boolean connected,
                           Map<DerivateResistance, Double> resistanceDerivator,
                           Map<DerivateCapacitance, Double> capacitanceDerivator,
                           Map<DerivateInductance, Double> inductanceDerivator,
@@ -38,6 +39,7 @@ public class MeasurementDTO {
         this.typeB = typeB;
         this.valueB = valueB;
         this.seriesMode =seriesMode;
+        this.connected = connected;
         this.resistanceDerivator=resistanceDerivator;
         this.capacitanceDerivator=capacitanceDerivator;
         this.inductanceDerivator=inductanceDerivator;
@@ -59,6 +61,10 @@ public class MeasurementDTO {
 
     public SeriesMode getSeriesMode() {
         return seriesMode;
+    }
+
+    public Boolean getConnected() {
+        return connected;
     }
 
     public Map<DerivateResistance, Double> getResistanceDerivator() {
