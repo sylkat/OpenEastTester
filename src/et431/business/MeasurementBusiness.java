@@ -25,7 +25,7 @@ public class MeasurementBusiness implements Runnable {
     private final MeterBusiness meterBusiness;
     private final ConfigBusiness configBusiness;
     private final List<MeasurementObserver> observers = new ArrayList<>();
-    private static final double MAX_RESISTANCE_LIMIT = 20_000_000.0;
+    private static final double MAX_RESISTANCE_LIMIT = 450_000_000.0;
     private final Object serialLock;
 
     public MeasurementBusiness(MeterBusiness meterBusiness, ConfigBusiness configBusiness,Object serialLock) {
