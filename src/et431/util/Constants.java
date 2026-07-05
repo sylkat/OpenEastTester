@@ -6,7 +6,7 @@ public final class Constants {
 
     // Ocultar constructor para evitar instanciación de clase de utilidades
     private Constants() {}
-    public static final int DEBUG = 1;
+    public static final int DEBUG =1;
     // --- LCR DISPLAY LABELS ---
     public static final String LABEL_RESISTANCE    = "(R) Resistance";
     public static final String LABEL_CAPACITANCE   = "(C) Capacitance";
@@ -19,6 +19,12 @@ public final class Constants {
     public static final String LABEL_ESR           = "(ESR)";
 
     // --- DERIVED METRIC LABELS FOR DISPLAY GRID ---
+
+    public static final String[] labelsAuto = {
+            "", "",
+            "",   "",
+            "",   ""
+    };
 
     public static final String[] labelsResistance = {
             "Impedance (Z)", "Phase Angle (θ)",
