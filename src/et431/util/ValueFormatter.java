@@ -57,9 +57,14 @@ public final class ValueFormatter {
             } else if (abs >= 1e-9) {
                 value /= 1e-9;
                 prefix = "n";
-            } else if (abs >= 1e-12) {
+            } else if (abs >= 1e-12) { // De 1.0 pF en adelante
                 value /= 1e-12;
                 prefix = "p";
+            } else if (abs >= 1e-15) { // De 0.001 pF (1 fF) hasta 0.999 pF
+                value /= 1e-12;       // Lo dividimos entre 1e-12 para verlo como "0.854"
+                prefix = "p";         // Sigue siendo escala pico
+            } else {
+                value = abs;
             }
         }
         else {
