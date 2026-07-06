@@ -7,6 +7,7 @@ import lcr.business.SerialDetector;
 import lcr.controller.MeterController;
 import lcr.enums.*;
 import lcr.observer.MeasurementObserver;
+import lcr.util.Constants;
 import lcr.view.MeterView;
 import lcr.view.RealTimeChartPanel;
 
@@ -28,7 +29,6 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     private DerivedPanel derivedPanel;
     private RealTimeChartPanel realTimeChartPanel;
 
-    // Propiedad para recordar el contenedor de la gráfica y controlar el toggle
     private JPanel southContainer;
     private JButton btnTogglePlot;
     JPanel mainContentGrid;
@@ -41,7 +41,6 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     private void initialize() {
         setIcon();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Ajustamos la altura inicial a 750 para que quepan holgadamente los bloques numéricos + gráfico
         setSize(825, 750);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -75,8 +74,6 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         infoPanel = new InfoPanel(configurationPanel);
         derivedPanel = new DerivedPanel();
         realTimeChartPanel = new RealTimeChartPanel();
-
-        // 1. Botón de control rápido para alternar la gráfica (Estilo a juego con el gráfico)
         btnTogglePlot = new JButton("Hide Plot");
         btnTogglePlot.setFocusable(false);
         btnTogglePlot.setFocusPainted(false);
@@ -90,30 +87,26 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
                 BorderFactory.createEmptyBorder(4, 12, 4, 12)
         ));
 
-// --- LA CLAVE: El color de fondo que antes era oscuro/negro, ahora es Deep Dark Slate ---
-        Color bgDarkApp = new Color(17, 24, 39); // Mismo fondo unificado que DerivedPanel y RealTimeChartPanel
+        Color bgDarkApp = new Color(17, 24, 39);
 
-// Subpanel para organizar la barra inferior (Botón a la derecha)
         JPanel bottomBarLayout = new JPanel(new BorderLayout(0, 0));
         bottomBarLayout.setOpaque(true);
-        bottomBarLayout.setBackground(bgDarkApp); // <--- Aquí ya no es negro, es el azul pizarra oscuro
+        bottomBarLayout.setBackground(bgDarkApp);
         bottomBarLayout.setBorder(BorderFactory.createEmptyBorder(6, 0, 8, 0));
 
         JPanel btnWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         btnWrapper.setOpaque(true);
-        btnWrapper.setBackground(bgDarkApp); // <--- Mismo fondo unificado
+        btnWrapper.setBackground(bgDarkApp);
         btnWrapper.add(btnTogglePlot);
 
         bottomBarLayout.add(btnWrapper, BorderLayout.NORTH);
-
-// Subpanel southContainer que agrupa gráfico y el botón inferior
         southContainer = new JPanel(new BorderLayout(0, 0));
         southContainer.setOpaque(true);
-        southContainer.setBackground(bgDarkApp); // <--- Mismo fondo unificado
+        southContainer.setBackground(bgDarkApp);
         southContainer.add(realTimeChartPanel, BorderLayout.CENTER);
         southContainer.add(bottomBarLayout, BorderLayout.SOUTH);
 
-        // 2. Contenedor para la parte superior numérica (Medición + Derivados)
+
         JPanel topDataPanel = new JPanel(new BorderLayout(0, 0));
         topDataPanel.setOpaque(false);
         topDataPanel.add(measurementPanel, BorderLayout.WEST);
@@ -122,7 +115,6 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         measurementPanel.setMaximumSize(new Dimension(400, 300));
         topDataPanel.setPreferredSize(new Dimension(200, 300));
         topDataPanel.setMaximumSize(new Dimension(200, 300));
-        // 3. ¡LA CLAVE!: Un contenedor central elástico usando GridBagLayout
         mainContentGrid = new JPanel(new GridBagLayout());
         mainContentGrid.setOpaque(false);
 
@@ -130,25 +122,22 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.BOTH;
 
-        // Fila 0: Bloque numérico (No estira verticalmente por sí solo)
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 0.0; // peso vertical 0
-        gbc.insets = new Insets(0, 0, 0, 0); // Margen inferior
+        gbc.insets = new Insets(0, 0, 0, 0);
         mainContentGrid.add(topDataPanel, gbc);
 
-        // Fila 1: Bloque del gráfico (Se lleva todo el peso y elasticidad vertical)
         gbc.gridy = 1;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0; // peso vertical completo
         gbc.insets = new Insets(0, 0, 0, 0);
         mainContentGrid.add(southContainer, gbc);
 
-        // 4. Distribución limpia del Frame Principal
         add(infoPanel, BorderLayout.NORTH);
         add(configurationPanel, BorderLayout.EAST);
-        add(mainContentGrid, BorderLayout.CENTER); // El GridBag dinámico toma el control
-        add(statusBarPanel, BorderLayout.SOUTH);        // La barra de estado fija abajo del todo
+        add(mainContentGrid, BorderLayout.CENTER);
+        add(statusBarPanel, BorderLayout.SOUTH);
     }
 
 
@@ -191,7 +180,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     private void setConfiguration() {
         ConfigDTO config = configurationPanel.getConfigFromUI();
         infoPanel.updateDisplay(config);
-        meterController.applyConfiguration(config);
+       //meterController.applyConfiguration(config);
     }
 
     @Override
@@ -267,6 +256,8 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
             } else if (source == configurationPanel.getBiasComboBox()) {
                 BiasVoltage bias = (BiasVoltage) configurationPanel.getBiasComboBox().getSelectedItem();
                 meterController.changeBias(bias);
+            }else if (source == configurationPanel.getChkDebug()) {
+                Constants.SHOW_LOGS = configurationPanel.getChkDebug().isSelected();
             }
             ConfigDTO config = configurationPanel.getConfigFromUI();
             infoPanel.updateDisplay(config);
@@ -282,39 +273,26 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         configurationPanel.getAutoRangeCheckBox().addActionListener(comboListener);
         configurationPanel.getRangeComboBox().addActionListener(comboListener);
         configurationPanel.getBiasComboBox().addActionListener(comboListener);
-
-
-
-
+        configurationPanel.getChkDebug().addActionListener(comboListener);
     }
 
     private void setButtonTogglePotListener(){
-        // AÑADIDO: Listener del botón de ocultar/mostrar gráfico con redimensionado del JFrame
         btnTogglePlot.addActionListener(e -> {
             boolean isVisible = realTimeChartPanel.isVisible();
-
             if (isVisible) {
-                // 1. Primero reducimos el tamaño de la ventana para preparar el colapso
                 setSize(getWidth(), 440);
-
-                // 2. Ocultamos el gráfico
                 realTimeChartPanel.setVisible(false);
                 btnTogglePlot.setText("Show Plot");
                 realTimeChartPanel.setSize(new Dimension(200,800));
                 btnTogglePlot.setForeground(new Color(0x00, 0xE5, 0xC9)); // Cian
             } else {
-                // 1. Primero mostramos el gráfico para que recupere su espacio
                 realTimeChartPanel.setVisible(true);
                 realTimeChartPanel.setSize(new Dimension(200,1000));
                 btnTogglePlot.setText("Hide Plot");
                 btnTogglePlot.setForeground(new Color(0x9A, 0x9D, 0xA3));
-
-                // 2. Expandimos la ventana
                 setSize(getWidth(), 750);
             }
-
-            // 3. Forzamos a todo el árbol de contenedores a recalcularse y repintarse al instante
-            mainContentGrid.updateUI(); // <-- Esto obliga a reubicar el botón de inmediato sin esperar
+            mainContentGrid.updateUI();
             revalidate();
             repaint();
         });
