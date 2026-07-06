@@ -1,7 +1,9 @@
 package gui;
 
+import com.fazecast.jSerialComm.SerialPort;
 import lcr.beans.ConfigDTO;
 import lcr.beans.MeasurementDTO;
+import lcr.business.SerialDetector;
 import lcr.controller.MeterController;
 import lcr.enums.*;
 import lcr.observer.MeasurementObserver;
@@ -12,12 +14,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
+import static lcr.util.Constants.titleApp;
+
 /**
  * Main application frame that orchestrates the subpanels and connects UI events to the controller.
  */
 public class MainWindow extends JFrame implements MeasurementObserver, MeterView {
     private ConfigurationPanel configurationPanel;
-    private StatusBar statusBar;
+    private StatusBarPanel statusBarPanel;
     private MeasurementPanel measurementPanel;
     private MeterController meterController;
     private InfoPanel infoPanel;
@@ -30,8 +34,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     JPanel mainContentGrid;
 
     public MainWindow() {
-        super("Open East Tester");
-
+        super(titleApp);
         initialize();
     }
 
@@ -67,7 +70,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
      */
     private void setupComponents() {
         configurationPanel = new ConfigurationPanel();
-        statusBar = new StatusBar();
+        statusBarPanel = new StatusBarPanel();
         measurementPanel = new MeasurementPanel();
         infoPanel = new InfoPanel(configurationPanel);
         derivedPanel = new DerivedPanel();
@@ -145,43 +148,92 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         add(infoPanel, BorderLayout.NORTH);
         add(configurationPanel, BorderLayout.EAST);
         add(mainContentGrid, BorderLayout.CENTER); // El GridBag dinámico toma el control
-        add(statusBar, BorderLayout.SOUTH);        // La barra de estado fija abajo del todo
+        add(statusBarPanel, BorderLayout.SOUTH);        // La barra de estado fija abajo del todo
     }
+
 
     /**
      * Binds UI control actions to controller operations, respecting synchronization flags.
      */
     private void setupListeners() {
-        // AÑADIDO: Listener del botón de ocultar/mostrar gráfico con redimensionado del JFrame
-        btnTogglePlot.addActionListener(e -> {
-            boolean isVisible = realTimeChartPanel.isVisible();
-
-            if (isVisible) {
-                // 1. Primero reducimos el tamaño de la ventana para preparar el colapso
-                setSize(getWidth(), 440);
-
-                // 2. Ocultamos el gráfico
-                realTimeChartPanel.setVisible(false);
-                btnTogglePlot.setText("Show Plot");
-                realTimeChartPanel.setSize(new Dimension(200,800));
-                btnTogglePlot.setForeground(new Color(0x00, 0xE5, 0xC9)); // Cian
-            } else {
-                // 1. Primero mostramos el gráfico para que recupere su espacio
-                realTimeChartPanel.setVisible(true);
-                realTimeChartPanel.setSize(new Dimension(200,1000));
-                btnTogglePlot.setText("Hide Plot");
-                btnTogglePlot.setForeground(new Color(0x9A, 0x9D, 0xA3));
-
-                // 2. Expandimos la ventana
-                setSize(getWidth(), 750);
-            }
-
-            // 3. Forzamos a todo el árbol de contenedores a recalcularse y repintarse al instante
-            mainContentGrid.updateUI(); // <-- Esto obliga a reubicar el botón de inmediato sin esperar
+        setButtonTogglePotListener();
+        setComboBoxListeners();
+        configurationPanel.getConnectButton().addActionListener(e -> {onButtonConnect();});
+        configurationPanel.getToggleCollapseButton().addActionListener(e -> {
+            configurationPanel.toggleCollapseState();
             revalidate();
             repaint();
         });
+        initSerialPortListener();
+    }
 
+    private void onButtonConnect(){
+        String selectedPort = (String) configurationPanel.getPortComboBox().getSelectedItem();
+        SupportedMeter selectedModel= (SupportedMeter) configurationPanel.getModelComboBox().getSelectedItem();
+        boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect");
+
+        if(!meterController.connectButtonPressed(selectedPort,selectedModel)){
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Could not establish a connection with the LCR meter on port " + selectedPort + ".\n" +
+                            "Please verify the cable connection, make sure the device is ON, and try again.",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        if (checkingConnectAction) {
+            setConfiguration();
+        }
+    }
+
+    private void setConfiguration() {
+        ConfigDTO config = configurationPanel.getConfigFromUI();
+        infoPanel.updateDisplay(config);
+        meterController.applyConfiguration(config);
+    }
+
+    @Override
+    public void onMeasurementReceived(MeasurementDTO dto) {
+        measurementPanel.setPrimary(dto.getTypeA()+" ("+dto.getSeriesMode()+")", dto.getValueA());
+        measurementPanel.setSecondary(dto.getTypeB(), dto.getValueB());
+        derivedPanel.updateDisplay(dto);
+        realTimeChartPanel.updateData(dto);
+    }
+
+    @Override
+    public void updateConnectionState(boolean isConnected,String manufacter, String model, String firmware, String portName) {
+        configurationPanel.getConnectButton().setText(isConnected ? "Disconnect" : "Connect");
+        statusBarPanel.setStatus(isConnected ? "Connected" : "Disconnected");
+        if (isConnected) {
+            statusBarPanel.setPort(portName);
+            statusBarPanel.setManufacter(manufacter);
+            statusBarPanel.setModel(model);
+            statusBarPanel.setFirmware(firmware);
+        } else {
+            statusBarPanel.setPort("-");
+            statusBarPanel.setManufacter("-");
+            statusBarPanel.setModel("-");
+            statusBarPanel.setFirmware("-");
+            measurementPanel.clear();
+            derivedPanel.clear();
+        }
+    }
+
+    @Override
+    public void updateUIFromConfig(ConfigDTO config) {
+        infoPanel.updateDisplay(config);
+        SwingUtilities.invokeLater(() -> {
+            configurationPanel.updateCombosWithoutTriggeringEvents(config);
+        });
+    }
+    @Override
+    public void  onDisconnected() {
+        meterController.disconnect();
+    }
+
+    private void setComboBoxListeners(){
         ActionListener comboListener = e -> {
             if (configurationPanel.isSynchronizing()) {
                 return;
@@ -231,79 +283,61 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         configurationPanel.getRangeComboBox().addActionListener(comboListener);
         configurationPanel.getBiasComboBox().addActionListener(comboListener);
 
-        configurationPanel.getConnectButton().addActionListener(e -> {
-            onButtonConnect();
-        });
 
-        configurationPanel.getToggleCollapseButton().addActionListener(e -> {
-            configurationPanel.toggleCollapseState();
+
+
+    }
+
+    private void setButtonTogglePotListener(){
+        // AÑADIDO: Listener del botón de ocultar/mostrar gráfico con redimensionado del JFrame
+        btnTogglePlot.addActionListener(e -> {
+            boolean isVisible = realTimeChartPanel.isVisible();
+
+            if (isVisible) {
+                // 1. Primero reducimos el tamaño de la ventana para preparar el colapso
+                setSize(getWidth(), 440);
+
+                // 2. Ocultamos el gráfico
+                realTimeChartPanel.setVisible(false);
+                btnTogglePlot.setText("Show Plot");
+                realTimeChartPanel.setSize(new Dimension(200,800));
+                btnTogglePlot.setForeground(new Color(0x00, 0xE5, 0xC9)); // Cian
+            } else {
+                // 1. Primero mostramos el gráfico para que recupere su espacio
+                realTimeChartPanel.setVisible(true);
+                realTimeChartPanel.setSize(new Dimension(200,1000));
+                btnTogglePlot.setText("Hide Plot");
+                btnTogglePlot.setForeground(new Color(0x9A, 0x9D, 0xA3));
+
+                // 2. Expandimos la ventana
+                setSize(getWidth(), 750);
+            }
+
+            // 3. Forzamos a todo el árbol de contenedores a recalcularse y repintarse al instante
+            mainContentGrid.updateUI(); // <-- Esto obliga a reubicar el botón de inmediato sin esperar
             revalidate();
             repaint();
         });
     }
 
-    private void onButtonConnect(){
-        String selectedPort = (String) configurationPanel.getPortComboBox().getSelectedItem();
-        SupportedMeter selectedModel= (SupportedMeter) configurationPanel.getModelComboBox().getSelectedItem();
-        boolean checkingConnectAction = configurationPanel.getConnectButton().getText().equalsIgnoreCase("Connect");
-
-        if(!meterController.connectButtonPressed(selectedPort,selectedModel)){
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Could not establish a connection with the LCR meter on port " + selectedPort + ".\n" +
-                            "Please verify the cable connection, make sure the device is ON, and try again.",
-                    "Connection Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        if (checkingConnectAction) {
-            setConfiguration();
-        }
-    }
-
-    private void setConfiguration() {
-        ConfigDTO config = configurationPanel.getConfigFromUI();
-        infoPanel.updateDisplay(config);
-        meterController.applyConfiguration(config);
-    }
-
-    @Override
-    public void onMeasurementReceived(MeasurementDTO dto) {
-        measurementPanel.setPrimary(dto.getTypeA()+" ("+dto.getSeriesMode()+")", dto.getValueA());
-        measurementPanel.setSecondary(dto.getTypeB(), dto.getValueB());
-        derivedPanel.updateDisplay(dto);
-        realTimeChartPanel.updateData(dto);
-    }
-
-    @Override
-    public void updateConnectionState(boolean isConnected, String model, String firmware, String portName) {
-        configurationPanel.getConnectButton().setText(isConnected ? "Disconnect" : "Connect");
-        statusBar.setStatus(isConnected ? "Connected" : "Disconnected");
-        if (isConnected) {
-            statusBar.setPort(portName);
-            statusBar.setModel(model);
-            statusBar.setFirmware(firmware);
-        } else {
-            statusBar.setPort("-");
-            statusBar.setModel("-");
-            statusBar.setFirmware("-");
-            measurementPanel.clear();
-            derivedPanel.clear();
-        }
-    }
-
-    @Override
-    public void updateUIFromConfig(ConfigDTO config) {
-        infoPanel.updateDisplay(config);
-        SwingUtilities.invokeLater(() -> {
-            configurationPanel.updateCombosWithoutTriggeringEvents(config);
+    public void initSerialPortListener(){
+        SerialDetector detector = new SerialDetector(new SerialDetector.OnPortDetectedListener() {
+            @Override
+            public void onNewPortConnected(String portName) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        configurationPanel.getPortComboBox().removeAllItems(); // Usa removeAllItems() para JComboBox
+                        for (SerialPort port : SerialPort.getCommPorts()) {
+                            configurationPanel.getPortComboBox().addItem(port.getSystemPortName());
+                        }
+                        configurationPanel.getPortComboBox().revalidate();
+                        configurationPanel.getPortComboBox().repaint();
+                    }
+                });
+            }
         });
-    }
-    @Override
-    public void  onDisconnected() {
-        meterController.disconnect();
+        detector.startMonitoring();
     }
 
     public static void main(String[] args) {
