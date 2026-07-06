@@ -53,7 +53,7 @@ public class MeterController {
             }
             DeviceInfo info = meterBusiness.meter.getDeviceInfo();
             Thread.sleep(500);
-            meterView.updateConnectionState(connected, info.getModel(), info.getFirmware(), port);
+            meterView.updateConnectionState(connected, info.getManufacturer(),info.getModel(), info.getFirmware(), port);
             measurementBusiness.startMeasurementTimer();
             return true;
         } catch (Exception ex) {
@@ -68,7 +68,7 @@ public class MeterController {
             meterBusiness.meter.disconnect();
         }
         measurementBusiness.stopMeasurementTimer();
-        meterView.updateConnectionState(false, "", "", "");
+        meterView.updateConnectionState(false, "","", "", "");
     }
 
     public void applyConfiguration(ConfigDTO config) {
