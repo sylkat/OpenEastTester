@@ -7,10 +7,11 @@ import java.awt.*;
 /**
  * Status bar component that provides real-time connection status and instrument metadata.
  */
-public class StatusBar extends JPanel {
+public class StatusBarPanel extends JPanel {
 
     private final JLabel lblStatus;
     private final JLabel lblPort;
+    private final JLabel lblManufacter;
     private final JLabel lblModel;
     private final JLabel lblFirmware;
     private final Color LABEL_COLOR = new Color(110, 120, 135);
@@ -18,7 +19,7 @@ public class StatusBar extends JPanel {
     private final Color CONN_COLOR = new Color(34, 139, 34);
     private final Color DISC_COLOR = new Color(178, 34, 34);
 
-    public StatusBar() {
+    public StatusBarPanel() {
         setLayout(new FlowLayout(FlowLayout.LEFT, 12, 5));
         setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
         setBackground(new Color(245, 246, 248));
@@ -28,6 +29,8 @@ public class StatusBar extends JPanel {
         lblStatus.setFont(panelFont);
         lblPort = new JLabel();
         lblPort.setFont(panelFont);
+        lblManufacter = new JLabel();
+        lblManufacter.setFont(panelFont);
         lblModel = new JLabel();
         lblModel.setFont(panelFont);
         lblFirmware = new JLabel();
@@ -37,6 +40,8 @@ public class StatusBar extends JPanel {
         add(lblStatus);
         add(createSeparator());
         add(lblPort);
+        add(createSeparator());
+        add(lblManufacter);
         add(createSeparator());
         add(lblModel);
         add(createSeparator());
@@ -68,6 +73,10 @@ public class StatusBar extends JPanel {
 
     public void setPort(String port) {
         lblPort.setText(formatText("Port", port, VALUE_COLOR));
+    }
+
+    public void setManufacter(String manufacter) {
+        lblManufacter.setText(formatText("Manufacter", manufacter, VALUE_COLOR));
     }
 
     public void setModel(String model) {
