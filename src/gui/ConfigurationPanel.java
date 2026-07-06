@@ -29,6 +29,7 @@ public class ConfigurationPanel extends JPanel {
     private JCheckBox chkAutoRange;
     private JComboBox<Range> cmbRange;
     private JComboBox<BiasVoltage> cmbBias;
+    private JCheckBox chkDebug;
 
     // --- COLLAPSIBLE UI COMPONENTS & STATE ---
     private JButton btnToggleCollapse;
@@ -166,6 +167,16 @@ public class ConfigurationPanel extends JPanel {
         cmbBias = new JComboBox<>(BiasVoltage.values());
         styleComponent(cmbBias);
         pnlSettings.add(cmbBias, gbcSet);
+        row++;
+
+        addLabel(pnlSettings, "Debug:", gbcSet, row);
+        chkDebug=new JCheckBox("Enable");
+        chkDebug.setSelected(true);
+        chkDebug.setBackground(pnlSettings.getBackground());
+        chkDebug.setForeground(TEXT_VALUE);
+        chkDebug.setFont(new Font("SansSerif", Font.BOLD, 12));
+        chkDebug.setFocusPainted(false);
+        pnlSettings.add(chkDebug, gbcSet);
         row++;
 
         // Reactive local UI flow logic for handling the range dropdown state
@@ -309,6 +320,7 @@ public class ConfigurationPanel extends JPanel {
     public JCheckBox getAutoRangeCheckBox() { return chkAutoRange; }
     public JComboBox<Range> getRangeComboBox() { return cmbRange; }
     public JComboBox<BiasVoltage> getBiasComboBox() { return cmbBias; }
+    public JCheckBox getChkDebug() {return chkDebug;}
 
     public boolean isSynchronizing() {
         return isSynchronizing;
