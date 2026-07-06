@@ -3,7 +3,7 @@ package lcr.util;
 public final class Constants {
 
 
-
+    public static String titleApp="Open LCR";
     // Ocultar constructor para evitar instanciación de clase de utilidades
     private Constants() {}
     public static final int DEBUG =1;
