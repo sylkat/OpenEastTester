@@ -1,6 +1,6 @@
-import et431.business.ET431;
-import et431.beans.Measurement;
-import et431.enums.*;
+import lcr.business.ETMeter;
+import lcr.beans.Measurement;
+import lcr.enums.*;
 
 public class Test {
 
@@ -17,7 +17,7 @@ public class Test {
 
         try {
 
-            ET431 meter = new ET431(args[0]);
+            ETMeter meter = new ETMeter(args[0]);
 
             System.out.println("Conectando...");
             meter.connect();

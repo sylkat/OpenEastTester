@@ -1,8 +1,8 @@
 package gui;
 
 import com.fazecast.jSerialComm.SerialPort;
-import et431.beans.ConfigDTO;
-import et431.enums.*;
+import lcr.beans.ConfigDTO;
+import lcr.enums.*;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;

@@ -1,15 +1,14 @@
 package gui;
 
-import et431.beans.ConfigDTO;
-import et431.beans.MeasurementDTO;
-import et431.controller.MeterController;
-import et431.enums.*;
-import et431.observer.MeasurementObserver;
-import et431.view.MeterView;
-import et431.view.RealTimeChartPanel;
+import lcr.beans.ConfigDTO;
+import lcr.beans.MeasurementDTO;
+import lcr.controller.MeterController;
+import lcr.enums.*;
+import lcr.observer.MeasurementObserver;
+import lcr.view.MeterView;
+import lcr.view.RealTimeChartPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
 

@@ -1,6 +1,6 @@
 package gui;
 
-import et431.beans.ConfigDTO;
+import lcr.beans.ConfigDTO;
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;

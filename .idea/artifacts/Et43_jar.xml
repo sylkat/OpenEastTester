@@ -4,6 +4,7 @@
     <root id="archive" name="Et43.jar">
       <element id="module-output" name="Et43" />
       <element id="extracted-dir" path="$USER_HOME$/ET431_pc/jSerialComm-2.11.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/jfreechart-1.5.6.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

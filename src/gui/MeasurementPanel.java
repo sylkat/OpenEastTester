@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import java.awt.*;
 
-import static et431.util.Constants.*;
+import static lcr.util.Constants.*;
 
 /**
  * UI panel for displaying real-time primary and secondary LCR measurements.

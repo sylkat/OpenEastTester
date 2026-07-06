@@ -1,19 +1,18 @@
 package gui;
 
-import et431.beans.ConfigDTO;
-import et431.beans.MeasurementDTO;
-import et431.enums.DerivateCapacitance;
-import et431.enums.DerivateImpedance;
-import et431.enums.DerivateInductance;
-import et431.enums.DerivateResistance;
-import et431.util.*;
+import lcr.beans.MeasurementDTO;
+import lcr.enums.DerivateCapacitance;
+import lcr.enums.DerivateImpedance;
+import lcr.enums.DerivateInductance;
+import lcr.enums.DerivateResistance;
+import lcr.util.*;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.util.Map; // Agregado para tipar explícitamente los mapas en Java 8
 
-import static et431.util.Constants.*;
+import static lcr.util.Constants.*;
 
 /**
  * Dashboard panel that displays calculated derived parameters
