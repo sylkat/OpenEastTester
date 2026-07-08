@@ -11,6 +11,7 @@ public final class Constants {
     // --- LCR DISPLAY LABELS ---
     public static final String LABEL_RESISTANCE    = "(R) Resistance";
     public static final String LABEL_CAPACITANCE   = "(C) Capacitance";
+    public static final String LABEL_ECAP          = "ECAP";
     public static final String LABEL_INDUCTANCE    = "(L) Inductance";
     public static final String LABEL_IMPEDANCE     = "(Z) Impedance";
     public static final String LABEL_REACTANCE     = "(X) Reactance";
