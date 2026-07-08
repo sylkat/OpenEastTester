@@ -152,7 +152,22 @@ public class DerivedPanel extends JPanel {
                     values[5] = "";
                 }
                 break;
-
+            case "ECAP":
+                if(!dto.getTypeB().startsWith(LABEL_LOSS_FACTOR)){
+                    labels = Constants.labelsAuto;
+                    break;
+                }
+                labels = Constants.labelsCapacitance;
+                if (dto.getCapacitanceDerivator() != null) {
+                    Map<DerivateCapacitance, Double> map = dto.getCapacitanceDerivator();
+                    values[0] = formatValue(map.get(DerivateCapacitance.EQUIVALENT_SERIES_RESISTANCE), "Ω");
+                    values[1] = formatValue(map.get(DerivateCapacitance.REACTANCE), "Ω");
+                    values[2] = formatValue(map.get(DerivateCapacitance.IMPEDANCE), "Ω");
+                    values[3] = formatValue(map.get(DerivateCapacitance.PHASE_ANGLE), "°");
+                    values[4] = formatValue(map.get(DerivateCapacitance.QUALITY_FACTOR), "");
+                    values[5] = "";
+                }
+                break;
             case "L":
                 if(!dto.getTypeB().startsWith(LABEL_QUALITY_FACTOR)){
                     labels = Constants.labelsAuto;
