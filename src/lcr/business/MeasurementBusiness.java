@@ -89,9 +89,11 @@ public class MeasurementBusiness implements Runnable {
                         break;
                     }
                 }
-                if(Constants.DEBUG>3)
-                    System.err.println("Error in measurement loop: " + ex.getMessage());
-                ex.printStackTrace();
+                if(Constants.DEBUG>2){
+                    System.err.println("ERROR IN MEASSURMENT LOOP EXIT!!!!: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+
             }
         }
     }
@@ -99,31 +101,61 @@ public class MeasurementBusiness implements Runnable {
     private void syncConfigFromHardware() {
         Thread syncThread = new Thread(() -> {
             try {
-                //System.out.println("REquest Info Device.");
-                Frequency freq = meterBusiness.meter.getFrequency();
-                Voltage volt = meterBusiness.meter.getVoltage();
-                Aperture aper = meterBusiness.meter.getAperture();
-                PrimaryParameter prim = meterBusiness.meter.getPrimaryParameter();
-                SecondaryParameter sec = meterBusiness.meter.getSecondaryParameter();
-                boolean autoRange = meterBusiness.meter.isAutoRange();
-                SeriesMode seriesMode = meterBusiness.meter.getSeriesMode();
+                PrimaryParameter prim = null;
+                Frequency freq =null;
+                Voltage volt = null;
+                Aperture aper = null;
+                SecondaryParameter sec = null;
+                SeriesMode seriesMode = null;
+                boolean autoRange=true;
                 Range range = null;
+                BiasVoltage bias = null;
+                ConfigDTO hardwareConfig = null;
+                if(Constants.DEBUG>2) System.out.println("Request Info to Device.");
+                try{
+                    prim = meterBusiness.meter.getPrimaryParameter();
+                    if(prim.toString().equals("DCR")){
+                         hardwareConfig = new ConfigDTO(Frequency.HZ0,
+                                Voltage.MV0,
+                                aper,
+                                PrimaryParameter.DCR,
+                                SecondaryParameter.EMPTY,
+                                true,
+                                Range.R1000,
+                                BiasVoltage.OFF,
+                                SeriesMode.SER);
+                        triggerUpdateUi(hardwareConfig);
+                        return;
+                    }
+                }catch (Exception e){
+                    if(Constants.DEBUG>1)System.err.println("Failed to read Primary hardware: " + e.getMessage());
+                    return;
+                }
+                freq = meterBusiness.meter.getFrequency();
+                volt = meterBusiness.meter.getVoltage();
+                aper = meterBusiness.meter.getAperture();
+                sec = meterBusiness.meter.getSecondaryParameter();
+                autoRange = meterBusiness.meter.isAutoRange();
+                seriesMode = meterBusiness.meter.getSeriesMode();
                 if (!autoRange) {
                     range = meterBusiness.meter.getRange();
                 }
-                BiasVoltage bias = meterBusiness.meter.getBiasVoltage();
-                ConfigDTO hardwareConfig = new ConfigDTO(freq, volt, aper, prim, sec, autoRange, range, bias, seriesMode);
-                configBusiness.setConfiguration(hardwareConfig);
-                for (MeasurementObserver observer : observers) {
-                    observer.updateUIFromConfig(hardwareConfig);
-                }
+                bias = meterBusiness.meter.getBiasVoltage();
+                hardwareConfig = new ConfigDTO(freq, volt, aper, prim, sec, autoRange, range, bias, seriesMode);
+                triggerUpdateUi(hardwareConfig);
             } catch (Exception e) {
-                if (Constants.DEBUG > 3)
+                if (Constants.DEBUG > 0)
                     System.err.println("Failed to sync configuration from hardware: " + e.getMessage());
             }
         });
-        // Arrancamos el hilo
         syncThread.start();
+    }
+
+    private void triggerUpdateUi(ConfigDTO hardwareConfig){
+        configBusiness.setConfiguration(hardwareConfig);
+        for (MeasurementObserver observer : observers) {
+            observer.updateUIFromConfig(hardwareConfig);
+        }
     }
 
     private void readAndNotifyMeasurement(ConfigDTO currentConfig) throws Exception {
@@ -150,7 +182,8 @@ public class MeasurementBusiness implements Runnable {
             displayValueA = ValueFormatter.formatSI(Math.abs(valueA), unitA);
         }
 
-
+//        System.out.println("currentConfig.getPrimaryMeasurement().toString():"+currentConfig.getPrimaryMeasurement().toString());
+//        System.out.println("RAW A:"+valueA+" "+"FORMAT A:"+displayValueA);
 
         String displayValueB = ValueFormatter.formatSI(valueB, unitB);
         if(currentConfig.getSecondaryMeasurement().equals(SecondaryParameter.D)){
@@ -164,12 +197,23 @@ public class MeasurementBusiness implements Runnable {
             displayValueB = "OL";
         }
 
+        if(currentConfig.getPrimaryMeasurement().toString().equals("DCR")){
+            displayValueB="";
+            typeBStr="";
+            if(valueA == 0.0 && valueB == 0.0){
+                return;
+            }
+        }
+
         switch (currentConfig.getPrimaryMeasurement().toString()){
             case "R":
                resistanceDerivator=ResistanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
                 break;
             case "C":
                capacitanceDerivator= CapacitanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
+                break;
+            case "ECAP":
+                capacitanceDerivator= CapacitanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
                 break;
             case "L":
                  inductanceDerivator=InductanceDerivator.calculate(valueA,valueB,currentConfig.getFrequency().getValue());
@@ -200,6 +244,7 @@ public class MeasurementBusiness implements Runnable {
 
     public String getManualUnit(Object param) {
         if (param == PrimaryParameter.C) return "F";
+        if (param == PrimaryParameter.ECAP) return "F";
         if (param == PrimaryParameter.L) return "H";
         return "Ω";
     }
