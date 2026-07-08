@@ -18,7 +18,7 @@ public enum Aperture {
 
     public static Aperture fromString(String text) {
         if (text == null) {
-            throw new IllegalArgumentException("El texto de Aperture no puede ser null");
+            throw new IllegalArgumentException("Aperture is null");
         }
 
         String cleanText = text.trim();
@@ -28,6 +28,6 @@ public enum Aperture {
                 return a;
             }
         }
-        throw new IllegalArgumentException("Velocidad (Aperture) no soportada: " + cleanText);
+        throw new IllegalArgumentException(" (Aperture) not supported: " + cleanText);
     }
 }
