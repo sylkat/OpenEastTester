@@ -1,7 +1,7 @@
 package lcr.enums;
 
 public enum Frequency {
-
+    HZ0(0),
     HZ100(100),
     HZ120(120),
     HZ1000(1000),
