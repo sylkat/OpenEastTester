@@ -124,7 +124,8 @@ public class ETMeter implements LcrMeter {
     // -------------------------------------------------------
     @Override
     public PrimaryParameter getPrimaryParameter() throws Exception {
-        return PrimaryParameter.valueOf(serial.execute("FUNC:IMP:A?"));
+        String result=serial.execute("FUNC:IMP:A?");
+        return PrimaryParameter.valueOf(result.trim());
     }
     @Override
     public void setPrimaryParameter(PrimaryParameter parameter) throws Exception {
