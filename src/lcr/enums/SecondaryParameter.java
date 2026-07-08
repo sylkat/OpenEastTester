@@ -1,12 +1,12 @@
 package lcr.enums;
 
 public enum SecondaryParameter {
-
     X,
     D,
     Q,
     THR,
-    ESR;
+    ESR,
+    EMPTY;
 
     public static SecondaryParameter fromString(String text) {
         for (SecondaryParameter p : SecondaryParameter.values()) {
