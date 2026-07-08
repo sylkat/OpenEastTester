@@ -1,7 +1,7 @@
 package lcr.enums;
 
 public enum Voltage {
-
+    MV0(0),
     MV100(100),
     MV300(300),
     MV600(600),
