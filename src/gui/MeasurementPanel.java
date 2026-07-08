@@ -8,7 +8,6 @@ import static lcr.util.Constants.*;
 
 /**
  * UI panel for displaying real-time primary and secondary LCR measurements.
- * Refactored with a premium, high-contrast dark tech aesthetic matching InfoPanel.
  */
 public class MeasurementPanel extends JPanel {
 
@@ -58,7 +57,6 @@ public class MeasurementPanel extends JPanel {
         lblPrimaryName.setForeground(COLOR_PRIMARY);
         pnlPrimaryTop.add(lblPrimaryName, BorderLayout.WEST);
 
-        // SUBPANEL PARA AGRUPAR BADGE E ICONO EN LA DERECHA
         JPanel pnlRightGroup = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         pnlRightGroup.setOpaque(false);
 
@@ -139,7 +137,7 @@ public class MeasurementPanel extends JPanel {
         if(name.startsWith("AUTO")){
             lblComponentIcon.setIcon(null);
         }
-        if(name.startsWith(LABEL_CAPACITANCE)){
+        if(name.startsWith(LABEL_CAPACITANCE) || name.startsWith(LABEL_ECAP)){
             lblComponentIcon.setIcon(new ComponentIcon("C", COMPONENT));
         }
         if(name.startsWith(LABEL_INDUCTANCE)){
