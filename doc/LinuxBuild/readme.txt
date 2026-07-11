@@ -1,0 +1,1 @@
+jpackage --type deb   --input out/artifacts/Et43_jar/   --dest out/   --name openET --main-jar openET.jar  --main-class gui.MainWindow   --linux-shortcut   --linux-menu-group "Development" --license-file LICENSE --icon src/resources/app_icon.png
