@@ -1,4 +1,10 @@
 package lcr.business;
+/**
+ * Mapea los Enums actuales al formato SCPI nativo y estricto de Tonghui:
+ * CPD, CPQ, CPG, CPRP, CSD, CSQ, CSRS, LPQ, LPD, LPG, LPRD, LPRP, LSRD,
+ * LSD, LSQ, LSRS, RX, ZTD, ZTR, GB, YTD, YTR, RPQ, RSQ, DCR
+ */
+
 
 import lcr.beans.DeviceInfo;
 import lcr.ET431Exception;
@@ -10,46 +16,47 @@ import static lcr.enums.PrimaryParameter.*;
 import static lcr.enums.SecondaryParameter.ESR;
 import static lcr.enums.SecondaryParameter.THR;
 
+/**
+ * Implementation of the LcrMeter interface handling strict composite SCPI command
+ * mappings over a serial connection for Tonghui series hardware (e.g., TH2839).
+ * * @author sylkat
+ */
 public class TonghuiMeter implements LcrMeter {
+
     private PrimaryParameter currentPrimary = PrimaryParameter.C;
     private SecondaryParameter currentSecondary = SecondaryParameter.D;
     private SeriesMode currentSeriesMode = SeriesMode.SER;
     private final SerialConnection serial;
 
+    /**
+     * Initializes the meter with a target serial port name.
+     * * @param portName the OS identifier for the communication port
+     */
     public TonghuiMeter(String portName) {
         this.serial = new SerialConnection(portName);
     }
 
     /**
-     * Mapea los Enums actuales al formato SCPI nativo y estricto de Tonghui:
-     * CPD, CPQ, CPG, CPRP, CSD, CSQ, CSRS, LPQ, LPD, LPG, LPRD, LPRP, LSRD,
-     * LSD, LSQ, LSRS, RX, ZTD, ZTR, GB, YTD, YTR, RPQ, RSQ, DCR
+     * Maps and commits the separate primary, secondary, and equivalent circuit mode
+     * enums into a native, strict composite Tonghui SCPI function token.
+     * * @throws Exception if the serial transport channel reports execution faults
      */
     private void updateTonghuiFunction() throws Exception {
         String combinedFunc;
+
         if (currentPrimary == PrimaryParameter.Z) {
             combinedFunc = "ZTD";
-        }
-        else if (currentPrimary == PrimaryParameter.DCR) {
+        } else if (currentPrimary == PrimaryParameter.DCR) {
             combinedFunc = "DCR";
-        }
-        else if (currentPrimary == PrimaryParameter.R) { // <-- Evaluas el PRIMARIO primero
+        } else if (currentPrimary == PrimaryParameter.R) {
             if (currentSecondary == SecondaryParameter.X) {
-                combinedFunc = "RX"; //
+                combinedFunc = "RX";
             } else {
-                // Si el secundario es Q, D o cualquier otro, genera RSQ o RPQ de tu lista
                 String modeStr = (currentSeriesMode == SeriesMode.SER) ? "SQ" : "PQ";
                 combinedFunc = "R" + modeStr;
             }
-        }else {
-            String primStr;
-            // Mapeo defensivo: Si es ECAP o AUTO, el medidor lo procesará físicamente como Capacitancia
-            if (currentPrimary == PrimaryParameter.L) {
-                primStr = "L";
-            } else {
-                primStr = "C"; // Para C, ECAP y AUTO
-            }
-
+        } else {
+            String primStr = (currentPrimary == PrimaryParameter.L) ? "L" : "C";
             String modeStr = (currentSeriesMode == SeriesMode.SER) ? "S" : "P";
             String secStr;
 
@@ -58,9 +65,7 @@ public class TonghuiMeter implements LcrMeter {
             } else if (currentSecondary == SecondaryParameter.Q) {
                 secStr = "Q";
             } else {
-                // Si el secundario es ESR, X o cualquier otro valor en C o L,
-                // la lista exige medir la resistencia equivalente (RS o RP)
-                secStr = (currentSeriesMode == SeriesMode.SER) ? "RS" : "RP"; // Genera CSRS, CPRP, LSRS, LPRP
+                secStr = (currentSeriesMode == SeriesMode.SER) ? "RS" : "RP";
             }
 
             combinedFunc = primStr + modeStr + secStr;
@@ -69,9 +74,6 @@ public class TonghuiMeter implements LcrMeter {
         serial.execute(":FUNC:IMP " + combinedFunc);
     }
 
-    // -------------------------------------------------------
-// Connection
-// -------------------------------------------------------
     @Override
     public void connect() throws ET431Exception {
         serial.connect();
@@ -79,7 +81,7 @@ public class TonghuiMeter implements LcrMeter {
             serial.execute("TRIG:SOUR INT");
         } catch (Exception e) {
             serial.disconnect();
-            throw new ET431Exception("Error setting intern trigger: " + e.getMessage());
+            throw new ET431Exception("Error setting internal trigger: " + e.getMessage());
         }
     }
 
@@ -93,9 +95,6 @@ public class TonghuiMeter implements LcrMeter {
         return serial.isConnected();
     }
 
-    // -------------------------------------------------------
-    // Raw SCPI
-    // -------------------------------------------------------
     @Override
     public String execute(String command) throws Exception {
         return serial.execute(command);
@@ -107,11 +106,13 @@ public class TonghuiMeter implements LcrMeter {
         if (response == null) {
             throw new ET431Exception("Invalid device information.");
         }
+
         response = response.replace("\"", "").trim();
         String[] values = response.split(",");
-        if (values.length < 4) { // Cambiado a 4, estándar SCPI mínimo suele ser Fabricante, Modelo, Serial, Firmware
+        if (values.length < 4) {
             throw new ET431Exception("Invalid response: " + response);
         }
+
         return new DeviceInfo(
                 values[0],
                 values[1],
@@ -120,18 +121,16 @@ public class TonghuiMeter implements LcrMeter {
         );
     }
 
-    // -------------------------------------------------------
-    // Measurement
-    // -------------------------------------------------------
     @Override
     public Measurement fetch() throws Exception {
-        String response = serial.execute("FETC?"); // Usamos la forma corta nativa del script
+        String response = serial.execute("FETC?");
         if (response == null) {
             if (Constants.DEBUG > 3) {
                 throw new ET431Exception("Invalid measurement.");
             }
             return new Measurement(0.0, 0.0);
         }
+
         response = response.replace("\"", "").trim();
         String[] values = response.split(",");
         if (values.length < 2) {
@@ -141,26 +140,23 @@ public class TonghuiMeter implements LcrMeter {
         if (values.length >= 3) {
             int status = Integer.parseInt(values[2].trim());
             if (status == -1 || status == 1 || status == 2) {
-                throw new ET431Exception(
-                        "Medición inválida, código de estado del TH2839: " + status);
+                throw new ET431Exception("Invalid measurement, status code from TH2839: " + status);
             }
         }
+
         return new Measurement(
                 Double.parseDouble(values[0]),
                 Double.parseDouble(values[1])
         );
     }
 
-    // -------------------------------------------------------
-    // Frequency
-    // -------------------------------------------------------
     @Override
     public Frequency getFrequency() throws Exception {
         String response = serial.execute("FREQ?");
         if (response == null) throw new ET431Exception("Timeout reading frequency.");
 
         response = response.trim().replace("\"", "");
-        double parsedValue = Double.parseDouble(response); // Seguro contra notación científica
+        double parsedValue = Double.parseDouble(response);
         int hz = (int) Math.round(parsedValue);
         return Frequency.fromValue(hz);
     }
@@ -170,16 +166,13 @@ public class TonghuiMeter implements LcrMeter {
         serial.execute("FREQ " + frequency.getValue());
     }
 
-    // -------------------------------------------------------
-    // Voltage
-    // -------------------------------------------------------
     @Override
     public Voltage getVoltage() throws Exception {
         String response = serial.execute(":LEV:VOLT?");
         if (response == null) throw new ET431Exception("Timeout reading voltage.");
 
         response = response.trim().replace("\"", "");
-        double parsedValue = Double.parseDouble(response); // Seguro contra notación científica (ej: 1.0000e+00)
+        double parsedValue = Double.parseDouble(response);
         int mv = (int) Math.round(parsedValue * 1000);
         return Voltage.fromValue(mv);
     }
@@ -190,9 +183,6 @@ public class TonghuiMeter implements LcrMeter {
         serial.execute(":LEV:VOLT " + volts);
     }
 
-    // -------------------------------------------------------
-    // Aperture
-    // -------------------------------------------------------
     @Override
     public Aperture getAperture() throws Exception {
         String response = serial.execute("APER?");
@@ -203,12 +193,9 @@ public class TonghuiMeter implements LcrMeter {
 
     @Override
     public void setAperture(Aperture aperture) throws Exception {
-        serial.execute("APER " + aperture.name()+", 4");
+        serial.execute("APER " + aperture.name() + ", 4");
     }
 
-    // -------------------------------------------------------
-    // Primary Parameter
-    // -------------------------------------------------------
     @Override
     public PrimaryParameter getPrimaryParameter() throws Exception {
         String response = serial.execute(":FUNC:IMP?");
@@ -228,9 +215,6 @@ public class TonghuiMeter implements LcrMeter {
         updateTonghuiFunction();
     }
 
-    // -------------------------------------------------------
-    // Secondary Parameter
-    // -------------------------------------------------------
     @Override
     public SecondaryParameter getSecondaryParameter() throws Exception {
         String response = serial.execute(":FUNC:IMP?");
@@ -238,7 +222,6 @@ public class TonghuiMeter implements LcrMeter {
 
         response = response.trim().replace("\"", "").toUpperCase();
 
-        // Interceptamos ZT antes para evitar colisión con la 'D' de pérdidas
         if (response.startsWith("ZT")) {
             return THR;
         }
@@ -258,16 +241,12 @@ public class TonghuiMeter implements LcrMeter {
         updateTonghuiFunction();
     }
 
-    // -------------------------------------------------------
-    // Series / Parallel
-    // -------------------------------------------------------
     @Override
     public SeriesMode getSeriesMode() throws Exception {
         String response = serial.execute(":FUNC:IMP?");
         if (response == null) throw new ET431Exception("Timeout reading equivalent mode.");
 
         response = response.trim().replace("\"", "").toUpperCase();
-        // El modo está embebido en el segundo caracter de la respuesta de función (ej: CPRP o CPD -> P)
         if (response.contains("P")) {
             return SeriesMode.PAL;
         }
@@ -280,9 +259,6 @@ public class TonghuiMeter implements LcrMeter {
         updateTonghuiFunction();
     }
 
-    // -------------------------------------------------------
-    // Auto Range
-    // -------------------------------------------------------
     @Override
     public boolean isAutoRange() throws Exception {
         String response = serial.execute("FUNC:IMP:RANG:AUTO?");
@@ -296,21 +272,24 @@ public class TonghuiMeter implements LcrMeter {
         serial.execute("FUNC:IMP:RANG:AUTO " + (enabled ? "ON" : "OFF"));
     }
 
-    // -------------------------------------------------------
-    // Manual Range
-    // -------------------------------------------------------
+    @Override
+    public SerialConnection getSerialConnection() {
+        return serial;
+    }
+
     @Override
     public Range getRange() throws Exception {
         String response = serial.execute("FUNC:IMP:RANG?");
         if (response == null) return null;
 
         response = response.replace("\"", "").trim();
-        double parsedValue = Double.parseDouble(response); // Seguro contra notación científica
+        double parsedValue = Double.parseDouble(response);
         int value = (int) Math.round(parsedValue);
 
         for (Range r : Range.values()) {
-            if (r.getValue() == value)
+            if (r.getValue() == value) {
                 return r;
+            }
         }
         return null;
     }
@@ -320,21 +299,19 @@ public class TonghuiMeter implements LcrMeter {
         serial.execute("FUNC:IMP:RANG " + range.getValue());
     }
 
-    // -------------------------------------------------------
-    // Bias Voltage
-    // -------------------------------------------------------
     @Override
     public BiasVoltage getBiasVoltage() throws Exception {
         String response = serial.execute("BIAS:VOLT?");
         if (response == null) return null;
 
         response = response.replace("\"", "").trim();
-        double parsedValue = Double.parseDouble(response); // Seguro contra notación científica
+        double parsedValue = Double.parseDouble(response);
         int value = (int) Math.round(parsedValue);
 
         for (BiasVoltage b : BiasVoltage.values()) {
-            if (b.getValue() == value)
+            if (b.getValue() == value) {
                 return b;
+            }
         }
         return null;
     }

@@ -1,25 +1,28 @@
 package lcr.util;
 
 import lcr.enums.DerivateImpedance;
-
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * Utility calculator processing secondary complex electrical parameters derived from
+ * primary Impedance (Z) magnitude and Reactance (X) metrics under dynamic AC test frequencies.
+ * * @author sylkat
+ */
 public class ImpedanceDerivator {
 
     /**
-     * Calculates all derived parameters based on Z, X, and the test frequency.
-     *
-     * @param z In ohms (Total Impedance Magnitude)
-     * @param x In ohms (Reactance). Positive for inductive, negative for capacitive.
-     * @param frequency In Hz (e.g., 1000 for 1kHz).
-     * @return An EnumMap containing all the calculated derived parameters.
+     * Calculates the complete structural mapping matrix of secondary derived parameter assets
+     * based on total impedance magnitude, reactive state elements, and operational signal frequencies.
+     * * @param z         the primary measured total impedance magnitude in Ohms (Ω)
+     * @param x         the reactive parameter in Ohms (Ω), positive for inductive, negative for capacitive
+     * @param frequency the nominal hardware AC test signal operational frequency value in Hertz (Hz)
+     * @return a structured EnumMap containing all successfully resolved complex derivative measurements
      */
     public static Map<DerivateImpedance, Double> calculate(double z, double x, double frequency) {
         Map<DerivateImpedance, Double> results = new EnumMap<>(DerivateImpedance.class);
 
         // 1. Calculate Real Resistance (R) = sqrt(Z² - X²)
-        // Math.max handles floating-point inaccuracies where x² might slightly exceed z²
         double rSquared = Math.max(0.0, Math.pow(z, 2) - Math.pow(x, 2));
         double r = Math.sqrt(rSquared);
         results.put(DerivateImpedance.RESISTANCE, r);
@@ -28,15 +31,15 @@ public class ImpedanceDerivator {
         double phaseAngle = Math.toDegrees(Math.atan2(x, r));
         results.put(DerivateImpedance.PHASE_ANGLE, phaseAngle);
 
-        // 3. Quality Factor (Q) = |X| / R (Avoid division by zero)
+        // 3. Quality Factor (Q) = |X| / R
         double qualityFactor = (r != 0) ? Math.abs(x) / r : Double.POSITIVE_INFINITY;
         results.put(DerivateImpedance.QUALITY_FACTOR, qualityFactor);
 
-        // 4. Loss Factor / Dissipation (D) = R / |X| (Avoid division by zero)
+        // 4. Loss Factor / Dissipation (D) = R / |X|
         double lossFactor = (x != 0) ? r / Math.abs(x) : Double.POSITIVE_INFINITY;
         results.put(DerivateImpedance.LOSS_FACTOR, lossFactor);
 
-        // Parasitic calculations based on frequency and the sign of Reactance (X)
+        // Parasitic element analysis based on frequency bounds and reactive load polarities
         if (frequency > 0 && x != 0) {
             double angularFrequency = 2 * Math.PI * frequency;
 
@@ -52,6 +55,7 @@ public class ImpedanceDerivator {
                 results.put(DerivateImpedance.PARASITIC_INDUCTANCE, 0.0);
             }
         } else {
+            // Default safe boundaries for hardware initialization states or zero lines
             results.put(DerivateImpedance.PARASITIC_INDUCTANCE, 0.0);
             results.put(DerivateImpedance.PARASITIC_CAPACITANCE, 0.0);
         }

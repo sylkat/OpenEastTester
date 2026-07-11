@@ -1,29 +1,31 @@
 package lcr.util;
 
 import lcr.enums.DerivateCapacitance;
-
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * Utility calculator processing secondary complex electrical parameters derived from
+ * primary Capacitance (C) and Dissipation Factor (D) metrics under dynamic AC test frequencies.
+ * * @author sylkat
+ */
 public class CapacitanceDerivator {
 
     /**
-     * Calculates all derived parameters based on C, D, and the test frequency.
-     *
-     * @param c In farads (Capacitance)
-     * @param d Dissipation/Loss factor (dimensionless)
-     * @param frequency In Hz (e.g., 1000 for 1kHz).
-     * @return An EnumMap containing all the calculated derived parameters.
+     * Calculates the complete structural mapping matrix of secondary derived parameter assets
+     * based on primary capacitance, dissipation factor loss loops, and operational signal frequencies.
+     * * @param c         the primary measured capacitance magnitude value in Farads (F)
+     * @param d         the dimensionless dissipation or loss factor coefficient value
+     * @param frequency the nominal hardware AC test signal operational frequency value in Hertz (Hz)
+     * @return a structured EnumMap containing all successfully resolved complex derivative measurements
      */
     public static Map<DerivateCapacitance, Double> calculate(double c, double d, double frequency) {
         Map<DerivateCapacitance, Double> results = new EnumMap<>(DerivateCapacitance.class);
 
-        // Avoid invalid or zero frequency/capacitance to prevent division by zero
         if (frequency > 0 && c != 0) {
             double angularFrequency = 2 * Math.PI * frequency;
 
             // 1. Capacitive Reactance (X) = -1 / (2 * pi * f * C)
-            // It is negative because it's capacitive
             double reactance = -1.0 / (angularFrequency * c);
             results.put(DerivateCapacitance.REACTANCE, reactance);
 
@@ -39,16 +41,16 @@ public class CapacitanceDerivator {
             double phaseAngle = Math.toDegrees(Math.atan2(reactance, esr));
             results.put(DerivateCapacitance.PHASE_ANGLE, phaseAngle);
 
-            // 5. Quality Factor (Q) = 1 / D (Avoid division by zero if D is 0)
+            // 5. Quality Factor (Q) = 1 / D
             double qualityFactor = (d != 0) ? 1.0 / d : Double.POSITIVE_INFINITY;
             results.put(DerivateCapacitance.QUALITY_FACTOR, qualityFactor);
 
         } else {
-            // Default safe values if input parameters are zero or invalid
+            // Default safe boundaries for hardware initialization states or zero lines
             results.put(DerivateCapacitance.REACTANCE, 0.0);
             results.put(DerivateCapacitance.EQUIVALENT_SERIES_RESISTANCE, 0.0);
             results.put(DerivateCapacitance.IMPEDANCE, 0.0);
-            results.put(DerivateCapacitance.PHASE_ANGLE, -90.0); // Pure capacitor phase
+            results.put(DerivateCapacitance.PHASE_ANGLE, -90.0);
             results.put(DerivateCapacitance.QUALITY_FACTOR, 0.0);
         }
 

@@ -10,15 +10,23 @@ import lcr.business.MeterBusiness;
 import lcr.observer.MeasurementObserver;
 
 /**
- * Main controller handling UI interactions and driving the LCR meter business logic.
+ * Main application controller coordinating UI user interactions from the view layer
+ * and driving async transactional updates to the underlying LCR meter hardware.
+ * * @author sylkat
  */
 public class MeterController {
+
     private final MeterView meterView;
     private final MeasurementBusiness measurementBusiness;
     private final ConfigBusiness configBusiness;
-    private final MeterBusiness meterBusiness;
+    public final MeterBusiness meterBusiness;
     private final Object serialLock = new Object();
 
+    /**
+     * Constructs the controller core, mapping business services and attaching
+     * the target view component as a measurement lifecycle observer.
+     * * @param meterView the main UI frame view presentation instance
+     */
     public MeterController(MeterView meterView) {
         this.meterView = meterView;
         this.meterBusiness = new MeterBusiness();
@@ -30,32 +38,41 @@ public class MeterController {
         }
     }
 
-    public boolean connectButtonPressed(String selectedPort,SupportedMeter selectedModel) {
+    /**
+     * Handles connection toggle actions from the UI button event, routing either
+     * a setup connection flow or an immediate graceful disconnect routine.
+     * * @param selectedPort  the OS communication channel interface identifier
+     * @param selectedModel the specific hardware manufacturer enum model type
+     * @return true if the toggle state switch operation finishes successfully
+     */
+    public boolean connectButtonPressed(String selectedPort, SupportedMeter selectedModel) {
         if (meterBusiness.meter == null || !meterBusiness.meter.isConnected()) {
-            if(connect(selectedPort,selectedModel)){
-                return true;
-            }else{
-                return false;
-            }
-
+            return connect(selectedPort, selectedModel);
         } else {
             disconnect();
             return true;
         }
     }
 
-    private boolean connect(String port,SupportedMeter selectedModel) {
+    /**
+     * Initializes a physical serial link to the instrument, verifies connection metrics,
+     * updates the presentation view bounds, and boots the streaming telemetry loop.
+     */
+    private boolean connect(String port, SupportedMeter selectedModel) {
         try {
-            meterBusiness.connect(port,selectedModel);
+            meterBusiness.connect(port, selectedModel);
             boolean connected = meterBusiness.meter.isConnected();
             if (!connected) {
                 return false;
             }
+
             DeviceInfo info = meterBusiness.meter.getDeviceInfo();
             Thread.sleep(500);
-            meterView.updateConnectionState(connected, info.getManufacturer(),info.getModel(), info.getFirmware(), port);
+
+            meterView.updateConnectionState(connected, info.getManufacturer(), info.getModel(), info.getFirmware(), port);
             measurementBusiness.startMeasurementTimer();
             return true;
+
         } catch (Exception ex) {
             System.err.println("Failed to establish connection on port " + port + ": " + ex.getMessage());
             ex.printStackTrace();
@@ -63,17 +80,25 @@ public class MeterController {
         return false;
     }
 
+    /**
+     * Tears down active streaming worker threads and safely disconnects the physical hardware device link.
+     */
     public void disconnect() {
         if (meterBusiness.meter != null) {
             meterBusiness.meter.disconnect();
         }
         measurementBusiness.stopMeasurementTimer();
-        meterView.updateConnectionState(false, "","", "", "");
+        meterView.updateConnectionState(false, "", "", "", "");
     }
 
+    /**
+     * Suspends the reader thread polling and dispatches a full configuration block payload
+     * sequence to the instrument registers in a decoupled thread task.
+     * * @param config the structural configuration data transfer object
+     */
     public void applyConfiguration(ConfigDTO config) {
         if (measurementBusiness != null) {
-            measurementBusiness.pauseSync(2500); // Higher margin due to multiple internal delays
+            measurementBusiness.pauseSync(2500);
         }
         configBusiness.setConfiguration(config);
 
@@ -91,6 +116,10 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the hardware sampling signal frequency parameter.
+     * * @param freq the target test signal Frequency enum item
+     */
     public void changeFrequency(Frequency freq) {
         measurementBusiness.pauseSync(1500);
         new Thread(() -> {
@@ -99,7 +128,6 @@ public class MeterController {
                     synchronized (serialLock) {
                         meterBusiness.meter.setFrequency(freq);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setFrequency(freq);
                     }
@@ -111,16 +139,18 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the hardware operational signal voltage limit.
+     * * @param volt the target test level Voltage enum item
+     */
     public void changeVoltage(Voltage volt) {
         measurementBusiness.pauseSync(1500);
-
         new Thread(() -> {
             try {
                 if (meterBusiness.meter != null && meterBusiness.meter.isConnected()) {
                     synchronized (serialLock) {
                         meterBusiness.meter.setVoltage(volt);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setVoltage(volt);
                     }
@@ -132,6 +162,10 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the measurement integration window speed aperture parameter.
+     * * @param aper the target resolution Aperture speed mode
+     */
     public void changeAperture(Aperture aper) {
         measurementBusiness.pauseSync(1500);
         new Thread(() -> {
@@ -140,7 +174,6 @@ public class MeterController {
                     synchronized (serialLock) {
                         meterBusiness.meter.setAperture(aper);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setAperture(aper);
                     }
@@ -152,6 +185,10 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the instrument primary reading display mode selector.
+     * * @param prim the target PrimaryParameter measurement selector
+     */
     public void changePrimaryParameter(PrimaryParameter prim) {
         measurementBusiness.pauseSync(1500);
         new Thread(() -> {
@@ -160,7 +197,6 @@ public class MeterController {
                     synchronized (serialLock) {
                         meterBusiness.meter.setPrimaryParameter(prim);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setPrimaryMeasurement(prim);
                     }
@@ -172,6 +208,10 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the instrument secondary reading display mode selector.
+     * * @param sec the target SecondaryParameter measurement selector
+     */
     public void changeSecondaryParameter(SecondaryParameter sec) {
         measurementBusiness.pauseSync(1500);
         new Thread(() -> {
@@ -191,6 +231,10 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the equivalent circuit matching circuit standard topology.
+     * * @param mode the structural SeriesMode configuration matrix
+     */
     public void changeSeriesMode(SeriesMode mode) {
         measurementBusiness.pauseSync(1500);
         new Thread(() -> {
@@ -199,7 +243,6 @@ public class MeterController {
                     synchronized (serialLock) {
                         meterBusiness.meter.setSeriesMode(mode);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setSeriesMode(mode);
                     }
@@ -211,16 +254,18 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously toggles automatic hardware scale configuration tracking loops.
+     * * @param auto true to hook into automatic scaling hardware routines
+     */
     public void changeAutoRange(boolean auto) {
         measurementBusiness.pauseSync(1500);
-
         new Thread(() -> {
             try {
                 if (meterBusiness.meter != null && meterBusiness.meter.isConnected()) {
                     synchronized (serialLock) {
                         meterBusiness.meter.setAutoRange(auto);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setAutoRange(auto);
                     }
@@ -232,16 +277,18 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously locks the instrument tracking window inside a strict manual scaling bracket.
+     * * @param range the discrete electrical Range value parameter bracket
+     */
     public void changeRange(Range range) {
         measurementBusiness.pauseSync(1500);
-
         new Thread(() -> {
             try {
                 if (meterBusiness.meter != null && meterBusiness.meter.isConnected()) {
                     synchronized (serialLock) {
                         meterBusiness.meter.setRange(range);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setRange(range);
                     }
@@ -253,16 +300,18 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Asynchronously updates the internal physical DC bias injection voltage configuration.
+     * * @param bias the target hardware BiasVoltage injection steps level
+     */
     public void changeBias(BiasVoltage bias) {
         measurementBusiness.pauseSync(1500);
-
         new Thread(() -> {
             try {
                 if (meterBusiness.meter != null && meterBusiness.meter.isConnected()) {
                     synchronized (serialLock) {
                         meterBusiness.meter.setBiasVoltage(bias);
                     }
-
                     if (configBusiness.getCurrentConfig() != null) {
                         configBusiness.getCurrentConfig().setBias(bias);
                     }
@@ -274,6 +323,10 @@ public class MeterController {
         }).start();
     }
 
+    /**
+     * Retrieves the structural synchronization reference for multi-threaded thread operations.
+     * * @return the shared serial resource locker mutex object
+     */
     public Object getSerialLock() {
         return this.serialLock;
     }

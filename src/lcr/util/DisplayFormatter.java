@@ -2,14 +2,23 @@ package lcr.util;
 
 import static lcr.util.Constants.*;
 
+/**
+ * Utility utility class responsible for formatting component parameter labels,
+ * converting raw instrument acronym tokens into verbose engineering strings for UI bindings.
+ * * @author sylkat
+ */
 public class DisplayFormatter {
 
     /**
      * Maps the short LCR meter display labels to their full technical names,
-     * prefixing the original physical device token for rapid visual cross-referencing.
+     * using constants definitions for system-wide presentation uniformity.
+     * * @param displayLabel the short raw token symbol received from the meter device
+     * @return the expanded technical label identifier string, or the original token if unmatched
      */
     public static String getDisplayLabel(String displayLabel) {
-        if (displayLabel == null) return "";
+        if (displayLabel == null) {
+            return "";
+        }
 
         String token = displayLabel.trim().toUpperCase();
 

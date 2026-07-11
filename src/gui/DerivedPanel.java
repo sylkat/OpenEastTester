@@ -121,10 +121,10 @@ public class DerivedPanel extends JPanel {
         switch (dto.getMeasureType()) {
             case "R":
                 if(!dto.getTypeB().startsWith(LABEL_REACTANCE)){
-                    labels = Constants.labelsAuto;
+                    labels = Constants.LABELS_AUTO;
                     break;
                 }
-                labels = Constants.labelsResistance;
+                labels = Constants.LABELS_RESISTANCE;
                 if (dto.getResistanceDerivator() != null) {
                     Map<DerivateResistance, Double> map = dto.getResistanceDerivator();
                     values[0] = formatValue(map.get(DerivateResistance.IMPEDANCE), "Ω");
@@ -138,10 +138,10 @@ public class DerivedPanel extends JPanel {
 
             case "C":
                 if(!dto.getTypeB().startsWith(LABEL_LOSS_FACTOR)){
-                    labels = Constants.labelsAuto;
+                    labels = Constants.LABELS_AUTO;
                     break;
                 }
-                labels = Constants.labelsCapacitance;
+                labels = Constants.LABELS_CAPACITANCE;
                 if (dto.getCapacitanceDerivator() != null) {
                     Map<DerivateCapacitance, Double> map = dto.getCapacitanceDerivator();
                     values[0] = formatValue(map.get(DerivateCapacitance.EQUIVALENT_SERIES_RESISTANCE), "Ω");
@@ -154,10 +154,10 @@ public class DerivedPanel extends JPanel {
                 break;
             case "ECAP":
                 if(!dto.getTypeB().startsWith(LABEL_LOSS_FACTOR)){
-                    labels = Constants.labelsAuto;
+                    labels = Constants.LABELS_AUTO;
                     break;
                 }
-                labels = Constants.labelsCapacitance;
+                labels = Constants.LABELS_CAPACITANCE;
                 if (dto.getCapacitanceDerivator() != null) {
                     Map<DerivateCapacitance, Double> map = dto.getCapacitanceDerivator();
                     values[0] = formatValue(map.get(DerivateCapacitance.EQUIVALENT_SERIES_RESISTANCE), "Ω");
@@ -170,10 +170,10 @@ public class DerivedPanel extends JPanel {
                 break;
             case "L":
                 if(!dto.getTypeB().startsWith(LABEL_QUALITY_FACTOR)){
-                    labels = Constants.labelsAuto;
+                    labels = Constants.LABELS_AUTO;
                     break;
                 }
-                labels = Constants.labelsInductance;
+                labels = Constants.LABELS_INDUCTANCE;
                 if (dto.getInductanceDerivator() != null) {
                     Map<DerivateInductance, Double> map = dto.getInductanceDerivator();
                     values[0] = formatValue(map.get(DerivateInductance.SERIES_RESISTANCE), "Ω");
@@ -187,10 +187,10 @@ public class DerivedPanel extends JPanel {
 
             case "Z":
                 if(!dto.getTypeB().startsWith(LABEL_REACTANCE)){
-                    labels = Constants.labelsAuto;
+                    labels = Constants.LABELS_AUTO;
                     break;
                 }
-                labels = Constants.labelsImpedance;
+                labels = Constants.LABELS_IMPEDANCE;
                 if (dto.getImpedanceDerivator() != null) {
                     Map<DerivateImpedance, Double> map = dto.getImpedanceDerivator();
                     values[0] = formatValue(map.get(DerivateImpedance.RESISTANCE), "Ω");

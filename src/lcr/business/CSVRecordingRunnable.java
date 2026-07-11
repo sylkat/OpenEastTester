@@ -7,37 +7,48 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Consumer thread runnable that continuously pulls measurement data from a
+ * blocking queue and records it into a CSV file. Includes a drainage phase on shutdown.
+ * * @author sylkat
+ */
 public class CSVRecordingRunnable implements Runnable {
 
     private final File targetFile;
     private final BlockingQueue<String[]> dataQueue;
-    private volatile boolean running = true; // Controls the consumer loop state from outside
+    private volatile boolean running = true;
 
+    /**
+     * Constructs a CSV recording worker.
+     * * @param targetFile the destination file where CSV data will be saved
+     * @param dataQueue  the thread-safe queue containing measurement data frames
+     */
     public CSVRecordingRunnable(File targetFile, BlockingQueue<String[]> dataQueue) {
         this.targetFile = targetFile;
         this.dataQueue = dataQueue;
     }
 
     /**
-     * Public method to stop the recording thread gracefully.
+     * Signals the recording loop to stop gracefully.
      */
     public void stopRecording() {
         this.running = false;
     }
 
+    /**
+     * Executes the main consumer loop, processing streaming data packets,
+     * followed by flushing out remaining elements upon shutdown.
+     */
     @Override
     public void run() {
         try (FileWriter fw = new FileWriter(targetFile, false);
              BufferedWriter writer = new BufferedWriter(fw)) {
 
-            // Standard instrumentation CSV header layout
             writer.write("Timestamp,Primary_Value,Secondary_Value");
             writer.newLine();
 
-            // 1. Live Capturing Phase: Process incoming data packets as they arrive
             while (running) {
                 try {
-                    // Poll data from the queue with a short timeout to prevent thread lockups on exit
                     String[] row = dataQueue.poll(100, TimeUnit.MILLISECONDS);
                     if (row != null) {
                         writer.write(row[0] + "," + row[1] + "," + row[2]);
@@ -45,13 +56,12 @@ public class CSVRecordingRunnable implements Runnable {
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    running = false; // Break the active lifecycle if the runtime triggers a hard shutdown
+                    running = false;
                 }
             }
 
-            // 2. Drainage Phase: Flush out any remaining buffered data packets inside the queue safely
             while (!dataQueue.isEmpty()) {
-                String[] row = dataQueue.poll(); // Instant poll without timeouts since no new data is expected
+                String[] row = dataQueue.poll();
                 if (row != null) {
                     writer.write(row[0] + "," + row[1] + "," + row[2]);
                     writer.newLine();

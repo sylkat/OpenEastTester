@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-import static lcr.util.Constants.titleApp;
+import static lcr.util.Constants.TITLE_APP;
 
 /**
  * Main application frame that orchestrates the subpanels and connects UI events to the controller.
@@ -34,7 +34,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
     JPanel mainContentGrid;
 
     public MainWindow() {
-        super(titleApp);
+        super(TITLE_APP);
         initialize();
     }
 
@@ -44,9 +44,9 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         setSize(825, 750);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+        meterController = new MeterController(this);
         setupComponents();
         setupListeners();
-        meterController = new MeterController(this);
         setVisible(true);
     }
 
@@ -73,7 +73,7 @@ public class MainWindow extends JFrame implements MeasurementObserver, MeterView
         measurementPanel = new MeasurementPanel();
         infoPanel = new InfoPanel(configurationPanel);
         derivedPanel = new DerivedPanel();
-        realTimeChartPanel = new RealTimeChartPanel();
+        realTimeChartPanel = new RealTimeChartPanel(meterController);
         btnTogglePlot = new JButton("Hide Plot");
         btnTogglePlot.setFocusable(false);
         btnTogglePlot.setFocusPainted(false);

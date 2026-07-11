@@ -1,3 +1,4 @@
+package test;
 import lcr.business.ETMeter;
 import lcr.beans.Measurement;
 import lcr.enums.*;

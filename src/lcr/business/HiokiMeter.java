@@ -8,16 +8,22 @@ import lcr.enums.*;
 import static lcr.enums.PrimaryParameter.*;
 import static lcr.enums.SecondaryParameter.ESR;
 
+/**
+ * Implementation of the LcrMeter interface handling SCPI command communication
+ * over a serial connection for the Hioki IM3536 / 3532 series hardware.
+ * * @author sylkat
+ */
 public class HiokiMeter implements LcrMeter {
+
     private final SerialConnection serial;
 
+    /**
+     * Initializes the meter with a target serial port name.
+     * * @param portName the OS identifier for the communication port
+     */
     public HiokiMeter(String portName) {
         this.serial = new SerialConnection(portName);
     }
-
-    // -------------------------------------------------------
-    // Connection
-    // -------------------------------------------------------
 
     @Override
     public void connect() throws ET431Exception {
@@ -45,9 +51,6 @@ public class HiokiMeter implements LcrMeter {
         return serial.isConnected();
     }
 
-    // -------------------------------------------------------
-    // Raw SCPI
-    // -------------------------------------------------------
     @Override
     public String execute(String command) throws Exception {
         return serial.execute(command);
@@ -56,45 +59,43 @@ public class HiokiMeter implements LcrMeter {
     @Override
     public DeviceInfo getDeviceInfo() throws Exception {
         String response = serial.execute("*IDN?");
-        if (response == null)
+        if (response == null) {
             throw new ET431Exception("Invalid device information.");
+        }
 
         String[] values = response.split(",");
-        // El estándar de Hioki suele devolver 4 campos
-        if (values.length < 4)
+        if (values.length < 4) {
             throw new ET431Exception("Invalid Hioki response: " + response);
+        }
 
         return new DeviceInfo(
-                values[0].trim(), // Fabricante (HIOKI)
-                values[1].trim(), // Modelo (e.g., 3532 o IM3536)
-                values[2].trim(), // Número de Serie o submodelo (e.g., 50)
-                values[3].trim()  // Versión de Firmware (e.g., Version No.)
+                values[0].trim(), // Manufacturer (HIOKI)
+                values[1].trim(), // Model (e.g., IM3536)
+                values[2].trim(), // Serial Number or Submodel
+                values[3].trim()  // Firmware Version
         );
     }
 
-    // -------------------------------------------------------
-    // Measurement
-    // -------------------------------------------------------
     @Override
     public Measurement fetch() throws Exception {
         serial.execute("*CLS");
         serial.execute("*TRG");
         String response = serial.execute(":MEAS?");
-        if (response == null)
+        if (response == null) {
             throw new ET431Exception("Invalid measurement from Hioki.");
+        }
+
         String[] values = response.split(",");
         if (values.length < 2) {
             throw new ET431Exception("Invalid measurement: " + response);
         }
+
         return new Measurement(
                 Double.parseDouble(values[0].trim()),
                 Double.parseDouble(values[1].trim())
         );
     }
 
-    // -------------------------------------------------------
-    // Frequency
-    // -------------------------------------------------------
     @Override
     public Frequency getFrequency() throws Exception {
         String response = serial.execute(":FREQuency?").trim();
@@ -108,9 +109,6 @@ public class HiokiMeter implements LcrMeter {
         serial.execute(":FREQuency " + frequency.getValue());
     }
 
-    // -------------------------------------------------------
-    // Voltage
-    // -------------------------------------------------------
     @Override
     public Voltage getVoltage() throws Exception {
         String response = serial.execute(":LEVel:VOLTage?").trim();
@@ -124,9 +122,6 @@ public class HiokiMeter implements LcrMeter {
         serial.execute(":LEVel:VOLTage " + volts);
     }
 
-    // -------------------------------------------------------
-// Aperture
-// -------------------------------------------------------
     @Override
     public void setAperture(Aperture aperture) throws Exception {
         String speed;
@@ -151,13 +146,10 @@ public class HiokiMeter implements LcrMeter {
 
     @Override
     public Aperture getAperture() throws Exception {
-        String response = serial.execute(":SPEED?").trim(); // Devuelve FAST/NORMal/SLOW/SLOW2
+        String response = serial.execute(":SPEED?").trim();
         return Aperture.fromString(response);
     }
 
-    // -------------------------------------------------------
-    // Primary Parameter
-    // -------------------------------------------------------
     @Override
     public PrimaryParameter getPrimaryParameter() throws Exception {
         String response = serial.execute(":PARameter1?").trim().toUpperCase();
@@ -200,14 +192,11 @@ public class HiokiMeter implements LcrMeter {
                 break;
             case AUTO:
             default:
-                throw new ET431Exception("Modo " + parameter + " no soportado en Hioki de forma nativa.");
+                throw new ET431Exception("Mode " + parameter + " is not natively supported on Hioki hardware.");
         }
         serial.execute(":PARameter1 " + hiokiParam);
     }
 
-    // -------------------------------------------------------
-    // Secondary Parameter
-    // -------------------------------------------------------
     @Override
     public SecondaryParameter getSecondaryParameter() throws Exception {
         String response = serial.execute(":PARameter2?").trim().toUpperCase();
@@ -220,15 +209,12 @@ public class HiokiMeter implements LcrMeter {
     @Override
     public void setSecondaryParameter(SecondaryParameter parameter) throws Exception {
         if (parameter == SecondaryParameter.THR) {
-            throw new ET431Exception("THR no está soportado por Hioki.");
+            throw new ET431Exception("THR is not supported by Hioki hardware.");
         }
         String hiokiParam = (parameter == ESR) ? "RS" : parameter.name();
         serial.execute(":PARameter2 " + hiokiParam);
     }
 
-    // -------------------------------------------------------
-    // Series / Parallel
-    // -------------------------------------------------------
     @Override
     public SeriesMode getSeriesMode() throws Exception {
         return SeriesMode.SER;
@@ -236,13 +222,8 @@ public class HiokiMeter implements LcrMeter {
 
     @Override
     public void setSeriesMode(SeriesMode mode) throws Exception {
-        throw new UnsupportedOperationException(
-                "Series/Parallel mode is not supported by Hioki.");
+        throw new UnsupportedOperationException("Series/Parallel mode configuration is not supported by Hioki.");
     }
-
-    // -------------------------------------------------------
-    // Auto Range
-    // -------------------------------------------------------
 
     @Override
     public boolean isAutoRange() throws Exception {
@@ -255,26 +236,26 @@ public class HiokiMeter implements LcrMeter {
         serial.execute(":RANGE:AUTO " + (enabled ? "ON" : "OFF"));
     }
 
-    // -------------------------------------------------------
-    // Manual Range
-    // -------------------------------------------------------
+    @Override
+    public SerialConnection getSerialConnection() {
+        return serial;
+    }
+
     @Override
     public Range getRange() throws Exception {
         int value = Integer.parseInt(serial.execute(":RANGe?"));
         for (Range r : Range.values()) {
-            if (r.getValue() == value)
+            if (r.getValue() == value) {
                 return r;
+            }
         }
         return null;
     }
+
     @Override
     public void setRange(Range range) throws Exception {
         serial.execute(":RANGe " + range.getValue());
     }
-
-    // -------------------------------------------------------
-    // Bias Voltage Not implemented
-    // -------------------------------------------------------
 
     @Override
     public BiasVoltage getBiasVoltage() throws Exception {
@@ -284,5 +265,4 @@ public class HiokiMeter implements LcrMeter {
     @Override
     public void setBiasVoltage(BiasVoltage bias) throws Exception {
     }
-
 }

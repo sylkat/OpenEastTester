@@ -2,14 +2,15 @@ package lcr.view;
 
 import lcr.beans.MeasurementDTO;
 import lcr.business.CSVRecordingRunnable;
+import lcr.controller.MeterController;
 import lcr.util.Constants;
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.event.AxisChangeEvent;
 import org.jfree.chart.event.AxisChangeListener;
+import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.LegendTitle;
@@ -29,21 +30,23 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Custom graphical presentation panel managing real-time dynamic dashboard feeds
+ * for live telemetry data streams using asymmetric synchronized charting layers.
+ * * @author sylkat
+ */
 public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
-    // ---------------------------------------------------------------
-    // Color Palette matching DerivedPanel / InfoPanel
-    // ---------------------------------------------------------------
     private static final Color BG_PANEL       = new Color(17, 24, 39);
     private static final Color BG_PLOT        = new Color(24, 32, 48);
     private static final Color BORDER_COLOR   = new Color(55, 65, 81);
     private static final Color TEXT_LABEL     = new Color(156, 163, 175);
     private static final Color TEXT_PRIMARY   = new Color(243, 244, 246);
 
-    private static final Color ACCENT_1       = new Color(255, 170, 0);   // Yellow / Orange default
+    private static final Color ACCENT_1       = new Color(255, 170, 0);
     private static final Color ACCENT_2       = new Color(56, 189, 248);
     private static final Color ACCENT_GREEN   = new Color(52, 211, 153);
-    private static final Color ACCENT_RED     = new Color(239, 68, 68);    // TailWind Red 500 for Recording Stop state
+    private static final Color ACCENT_RED     = new Color(239, 68, 68);
     private static final Color BG_CARD_BUTTON = new Color(31, 41, 55);
 
     private static final Font FONT_AXIS  = new Font("Segoe UI", Font.PLAIN, 12);
@@ -52,39 +55,55 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
     private TimeSeries series1;
     private TimeSeries series2;
-    private TimeSeriesCollection dataset;
-    private NumberAxis yAxis;
+
+    private TimeSeriesCollection dataset1;
+    private TimeSeriesCollection dataset2;
+
+    private NumberAxis yAxis1;
+    private NumberAxis yAxis2;
+
     private DateAxis xAxis;
-    private XYLineAndShapeRenderer renderer;
+
+    private XYLineAndShapeRenderer renderer1;
+    private XYLineAndShapeRenderer renderer2;
+
     private JCheckBox chkSeries1;
     private JCheckBox chkSeries2;
 
-    // --- RECORD STATE & THREAD CONTEXT ---
+    private XYPlot subplot1;
+    private XYPlot subplot2;
+
     private boolean isRecording = false;
     private JButton btnRecord;
     private BlockingQueue<String[]> csvQueue;
     private Thread recordingThread;
     private CSVRecordingRunnable csvRunnable;
 
-    // --- PAUSE STATE ---
     private volatile boolean isPaused = false;
     private JButton btnPause;
+    private JButton btnBiasSweep;
 
-    // --- TIME FORMAT STATE ---
     private boolean use24HourFormat = true;
     private JButton btnTimeFormat;
 
-    // --- PRECISION CONFIGURATION ---
     private JComboBox<String> cmbPrecision;
-
-    // --- SCROLLBAR & SLIDING WINDOW CONFIGURATION ---
     private JScrollBar scrollBar;
     private boolean isUpdatingScroll = false;
 
     private static final long LIVE_WINDOW_MS = 30000;
     private boolean isUserScrolling = false;
 
-    public RealTimeChartPanel() {
+    /**
+     * Active bridge instance driving business layer translations.
+     */
+    public final MeterController meterController;
+
+    /**
+     * Constructs the real-time runtime graphing canvas panel linking execution controls.
+     * * @param meterController the controller driving system message relays
+     */
+    public RealTimeChartPanel(MeterController meterController) {
+        this.meterController = meterController;
         setLayout(new BorderLayout());
         setBackground(BG_PANEL);
 
@@ -94,7 +113,7 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
         initScrollBar();
 
         ChartPanel chartPanel = new ChartPanel(
-                chart, 400, 200, 0, 0, 30000, 30000,
+                chart, 400, 400, 0, 0, 30000, 30000,
                 true, true, true, true, true, true
         );
 
@@ -121,16 +140,51 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
         series2 = new TimeSeries("Secondary Parameter");
         series2.setMaximumItemCount(150);
 
-        dataset = new TimeSeriesCollection();
-        dataset.addSeries(series1);
-        dataset.addSeries(series2);
+        dataset1 = new TimeSeriesCollection(series1);
+        dataset2 = new TimeSeriesCollection(series2);
     }
 
     private JFreeChart createChart() {
-        JFreeChart chart = ChartFactory.createTimeSeriesChart(
-                null, "Time", "Value", dataset, true, true, false
-        );
+        xAxis = new DateAxis("Time");
+        xAxis.setAutoRange(false);
+        styleAxis(xAxis);
+        updateTimeFormat();
+        xAxis.addChangeListener(this);
 
+        CombinedDomainXYPlot combinedPlot = new CombinedDomainXYPlot(xAxis);
+        combinedPlot.setGap(15.0);
+        combinedPlot.setBackgroundPaint(BG_PANEL);
+        combinedPlot.setOutlineVisible(false);
+
+        yAxis1 = new NumberAxis("");
+        yAxis1.setAutoRange(false);
+        styleAxis(yAxis1);
+
+        renderer1 = new XYLineAndShapeRenderer(true, false);
+        renderer1.setSeriesPaint(0, ACCENT_1);
+        renderer1.setSeriesStroke(0, new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        renderer1.setDefaultShapesFilled(true);
+        renderer1.setSeriesShape(0, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
+
+        subplot1 = new XYPlot(dataset1, null, yAxis1, renderer1);
+        styleSubplot(subplot1);
+        combinedPlot.add(subplot1, 1);
+
+        yAxis2 = new NumberAxis("");
+        yAxis2.setAutoRange(false);
+        styleAxis(yAxis2);
+
+        renderer2 = new XYLineAndShapeRenderer(true, false);
+        renderer2.setSeriesPaint(0, ACCENT_2);
+        renderer2.setSeriesStroke(0, new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        renderer2.setDefaultShapesFilled(true);
+        renderer2.setSeriesShape(0, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
+
+        subplot2 = new XYPlot(dataset2, null, yAxis2, renderer2);
+        styleSubplot(subplot2);
+        combinedPlot.add(subplot2, 1);
+
+        JFreeChart chart = new JFreeChart(null, JFreeChart.DEFAULT_TITLE_FONT, combinedPlot, true);
         chart.setBackgroundPaint(BG_PANEL);
         chart.setBorderVisible(false);
         chart.setPadding(new RectangleInsets(0, 12, 0, 0));
@@ -143,7 +197,10 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
             legend.setFrame(org.jfree.chart.block.BlockBorder.NONE);
         }
 
-        XYPlot plot = chart.getXYPlot();
+        return chart;
+    }
+
+    private void styleSubplot(XYPlot plot) {
         plot.setBackgroundPaint(BG_PLOT);
         plot.setDomainGridlinePaint(BORDER_COLOR);
         plot.setRangeGridlinePaint(BORDER_COLOR);
@@ -151,39 +208,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
         plot.setDomainCrosshairPaint(ACCENT_1);
         plot.setRangeCrosshairPaint(ACCENT_1);
         plot.setAxisOffset(new RectangleInsets(4, 4, 4, 4));
-
-        renderer = (XYLineAndShapeRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, ACCENT_1);
-        renderer.setSeriesPaint(1, ACCENT_2);
-        renderer.setSeriesStroke(0, new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        renderer.setSeriesStroke(1, new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        renderer.setSeriesShapesVisible(0, false);
-        renderer.setSeriesShapesVisible(1, false);
-        renderer.setDefaultShapesFilled(true);
-        renderer.setSeriesShape(0, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
-        renderer.setSeriesShape(1, new Ellipse2D.Double(-2.5, -2.5, 5, 5));
-
-        yAxis = (NumberAxis) plot.getRangeAxis();
-        yAxis.setAutoRange(false);
-        styleAxis(yAxis);
-
-        if (plot.getDomainAxis() instanceof NumberAxis) {
-            styleAxis((NumberAxis) plot.getDomainAxis());
-        } else {
-            plot.getDomainAxis().setLabelFont(FONT_AXIS);
-            plot.getDomainAxis().setLabelPaint(TEXT_LABEL);
-            plot.getDomainAxis().setTickLabelFont(FONT_AXIS);
-            plot.getDomainAxis().setTickLabelPaint(TEXT_LABEL);
-            plot.getDomainAxis().setAxisLinePaint(BORDER_COLOR);
-            plot.getDomainAxis().setTickMarkPaint(BORDER_COLOR);
-        }
-
-        xAxis = (DateAxis) plot.getDomainAxis();
-        xAxis.setAutoRange(false);
-        updateTimeFormat();
-        xAxis.addChangeListener(this);
-
-        return chart;
     }
 
     private JToolBar initToolBar() {
@@ -192,7 +216,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
         toolBar.setBackground(BG_PANEL);
         toolBar.setBorder(new EmptyBorder(8, 10, 8, 10));
 
-        // --- RECORD BUTTON ---
         btnRecord = new JButton("Record");
         styleButton(btnRecord);
         btnRecord.setForeground(ACCENT_1);
@@ -202,7 +225,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
         toolBar.addSeparator(new Dimension(8, 0));
 
-        // Pause / Resume button
         btnPause = new JButton("Pause");
         styleButton(btnPause);
         btnPause.setForeground(ACCENT_GREEN);
@@ -212,7 +234,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
         toolBar.addSeparator(new Dimension(8, 0));
 
-        // Reset button
         JButton btnReset = new JButton("Reset Plot");
         styleButton(btnReset);
         btnReset.setToolTipText("Clears trace history and resets scale bounds instantly");
@@ -221,7 +242,18 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
         toolBar.addSeparator(new Dimension(8, 0));
 
-        // Time Format Toggle button
+        btnBiasSweep = new JButton("Bias C-V");
+        styleButton(btnBiasSweep);
+        btnBiasSweep.setToolTipText("Execute continuous Bias Voltage Sweep analysis profiles");
+        btnBiasSweep.addActionListener(e -> {
+            Window ancestor = SwingUtilities.getWindowAncestor(this);
+            BiasSweepDialog dialog = new BiasSweepDialog(ancestor, this.meterController.meterBusiness.meter.getSerialConnection(), this);
+            dialog.setVisible(true);
+        });
+        toolBar.add(btnBiasSweep);
+
+        toolBar.addSeparator(new Dimension(8, 0));
+
         btnTimeFormat = new JButton("Format: 24H");
         styleButton(btnTimeFormat);
         btnTimeFormat.setToolTipText("Toggle timeline format between 12-hour and 24-hour mode");
@@ -230,7 +262,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
         toolBar.addSeparator(new Dimension(12, 0));
 
-        // Precision ComboBox Selection
         JLabel lblPrecision = new JLabel("Precision: ");
         lblPrecision.setFont(FONT_LABEL);
         lblPrecision.setForeground(TEXT_LABEL);
@@ -250,22 +281,20 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
         toolBar.addSeparator(new Dimension(16, 0));
 
-        // Primary Parameter Checkbox
         chkSeries1 = new JCheckBox("Show Primary", true);
         styleCheckbox(chkSeries1, ACCENT_1);
         chkSeries1.addActionListener(e -> {
-            renderer.setSeriesVisible(0, chkSeries1.isSelected());
+            renderer1.setSeriesVisible(0, chkSeries1.isSelected());
             adjustSymmetricRange();
         });
         toolBar.add(chkSeries1);
 
         toolBar.addSeparator(new Dimension(14, 0));
 
-        // Secondary Parameter Checkbox
         chkSeries2 = new JCheckBox("Show Secondary", true);
         styleCheckbox(chkSeries2, ACCENT_2);
         chkSeries2.addActionListener(e -> {
-            renderer.setSeriesVisible(1, chkSeries2.isSelected());
+            renderer2.setSeriesVisible(0, chkSeries2.isSelected());
             adjustSymmetricRange();
         });
         toolBar.add(chkSeries2);
@@ -344,10 +373,7 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
             fileChooser.setDialogTitle("Select Export Path and Format");
             fileChooser.setAcceptAllFileFilterUsed(false);
 
-            // Define filters clearly from the start
             FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("CSV Data Table (*.csv)", "csv");
-
-
             fileChooser.addChoosableFileFilter(csvFilter);
             fileChooser.setFileFilter(csvFilter);
 
@@ -377,7 +403,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
             int userSelection = fileChooser.showSaveDialog(this);
             if (userSelection == JFileChooser.APPROVE_OPTION) {
                 File targetFile = fileChooser.getSelectedFile();
-
                 String ext = "";
                 if (fileChooser.getFileFilter() == csvFilter) ext = ".csv";
 
@@ -385,7 +410,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
                     targetFile = new File(targetFile.getAbsolutePath() + ext);
                 }
 
-                // --- INITIALIZE CSV BACKGROUND WORKING THREAD ---
                 if (fileChooser.getFileFilter() == csvFilter) {
                     csvQueue = new LinkedBlockingQueue<>();
                     csvRunnable = new CSVRecordingRunnable(targetFile, csvQueue);
@@ -393,10 +417,9 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
                     recordingThread = new Thread(csvRunnable, "LCR-CSV-Recorder-Thread");
                     recordingThread.setPriority(Thread.MIN_PRIORITY);
 
-                    isRecording = true; // Engage data collection safety flag
+                    isRecording = true;
                     recordingThread.start();
                 } else {
-                    // Placeholder logic for TDMS / PNG hooks later
                     isRecording = true;
                 }
 
@@ -405,17 +428,14 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
                 btnRecord.setToolTipText("Halt ongoing measurements output pipeline streaming processes");
             }
         } else {
-            // Halt collection steps safely
             isRecording = false;
 
-            // Shut down business logic runnable if CSV was executed
             if (csvRunnable != null) {
                 csvRunnable.stopRecording();
             }
 
             if (recordingThread != null) {
                 try {
-                    // Join worker thread to allow structural drainage to conclude securely
                     recordingThread.join(2000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -424,7 +444,7 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
                 csvRunnable = null;
             }
 
-            csvQueue = null; // Flush referencing contexts
+            csvQueue = null;
 
             btnRecord.setText("Record");
             btnRecord.setForeground(ACCENT_1);
@@ -437,20 +457,19 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
     }
 
     private void updateYAxisPrecision() {
-        if (yAxis == null || cmbPrecision == null) return;
+        if (yAxis1 == null || yAxis2 == null || cmbPrecision == null) return;
         int decimals = cmbPrecision.getSelectedIndex() + 2;
 
         StringBuilder pattern = new StringBuilder("0.");
         for (int i = 0; i < decimals; i++) {
             pattern.append("0");
         }
-        yAxis.setNumberFormatOverride(new DecimalFormat(pattern.toString()));
+        DecimalFormat format = new DecimalFormat(pattern.toString());
+        yAxis1.setNumberFormatOverride(format);
+        yAxis2.setNumberFormatOverride(format);
     }
 
-    // ---------------------------------------------------------------
-    // UI Helper and Styling Methods
-    // ---------------------------------------------------------------
-    private void styleAxis(NumberAxis axis) {
+    private void styleAxis(org.jfree.chart.axis.Axis axis) {
         axis.setLabelFont(FONT_AXIS);
         axis.setLabelPaint(TEXT_LABEL);
         axis.setTickLabelFont(FONT_AXIS);
@@ -524,27 +543,20 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
 
     private void toggleTimeFormat() {
         use24HourFormat = !use24HourFormat;
-        if (use24HourFormat) {
-            btnTimeFormat.setText("Format: 24H");
-        } else {
-            btnTimeFormat.setText("Format: 12H");
-        }
+        btnTimeFormat.setText(use24HourFormat ? "Format: 24H" : "Format: 12H");
         updateTimeFormat();
     }
 
     private void updateTimeFormat() {
         if (xAxis != null) {
-            if (use24HourFormat) {
-                xAxis.setDateFormatOverride(new SimpleDateFormat("HH:mm:ss"));
-            } else {
-                xAxis.setDateFormatOverride(new SimpleDateFormat("hh:mm:ss a"));
-            }
+            xAxis.setDateFormatOverride(use24HourFormat ? new SimpleDateFormat("HH:mm:ss") : new SimpleDateFormat("hh:mm:ss a"));
         }
     }
 
-    // ---------------------------------------------------------------
-    // Data Management Methods
-    // ---------------------------------------------------------------
+    /**
+     * Appends parsed LCR component data streams directly into active visual line traces.
+     * * @param dto the tracking data object payload containing incoming hardware measurements
+     */
     public void updateData(MeasurementDTO dto) {
         if (isPaused) {
             return;
@@ -556,30 +568,31 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
             if (dto.getTypeA() != null && !dto.getTypeA().isEmpty()) {
                 series1.setKey(dto.getTypeA());
                 chkSeries1.setText("Show " + dto.getTypeA());
+                yAxis1.setLabel(dto.getTypeA());
             }
             if (dto.getTypeB() != null && !dto.getTypeB().isEmpty()) {
                 series2.setKey(dto.getTypeB());
                 chkSeries2.setText("Show " + dto.getTypeB());
+                yAxis2.setLabel(dto.getTypeB());
             }
 
             series1.setMaximumItemCount(150);
             series2.setMaximumItemCount(150);
+
             double valueA = Double.parseDouble(dto.getRealValueA());
             double valueB = Double.parseDouble(dto.getRealValueB());
-            if(dto.getTypeA().equals(Constants.LABEL_RESISTANCE)
-                    || dto.getTypeA().equals(Constants.LABEL_IMPEDANCE )){
+
+            if (Constants.LABEL_RESISTANCE.equals(dto.getTypeA()) || Constants.LABEL_IMPEDANCE.equals(dto.getTypeA())) {
                 valueA = Math.abs(valueA);
             }
+
             series1.addOrUpdate(now, valueA);
             series2.addOrUpdate(now, valueB);
 
             adjustSymmetricRange();
 
-            // --- INJECT DATA POINT INTO THE STREAMING CONTEXT ---
-            // --- INJECT DATA POINT INTO THE STREAMING CONTEXT ---
             if (isRecording && csvQueue != null) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-                // Use now.getStart() to retrieve the standard java.util.Date object cleanly
                 String timestampStr = sdf.format(now.getStart());
 
                 String[] dataRow = new String[]{
@@ -587,7 +600,6 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
                         String.valueOf(valueA),
                         String.valueOf(valueB)
                 };
-                // Offer data row safely without blocking the main Swing EDT thread
                 csvQueue.offer(dataRow);
             }
 
@@ -608,39 +620,47 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
     }
 
     private void adjustSymmetricRange() {
-        double maxAbs = 0.0;
-
-        if (renderer.isSeriesVisible(0)) {
+        double maxAbs1 = 0.0;
+        if (renderer1.isSeriesVisible(0)) {
             for (int i = 0; i < series1.getItemCount(); i++) {
                 double val = series1.getDataItem(i).getValue().doubleValue();
-                maxAbs = Math.max(maxAbs, Math.abs(val));
+                maxAbs1 = Math.max(maxAbs1, Math.abs(val));
             }
         }
+        if (maxAbs1 == 0.0) maxAbs1 = 1e-12;
+        double limit1 = maxAbs1 * 1.1;
+        yAxis1.setRange(-limit1, limit1);
 
-        if (renderer.isSeriesVisible(1)) {
+        double maxAbs2 = 0.0;
+        if (renderer2.isSeriesVisible(0)) {
             for (int i = 0; i < series2.getItemCount(); i++) {
                 double val = series2.getDataItem(i).getValue().doubleValue();
-                maxAbs = Math.max(maxAbs, Math.abs(val));
+                maxAbs2 = Math.max(maxAbs2, Math.abs(val));
             }
         }
-
-        if (maxAbs == 0.0) {
-            maxAbs = 1e-12;
-        }
-
-        double limit = maxAbs * 1.1;
-        yAxis.setRange(-limit, limit);
+        if (maxAbs2 == 0.0) maxAbs2 = 1e-12;
+        double limit2 = maxAbs2 * 1.1;
+        yAxis2.setRange(-limit2, limit2);
     }
 
+    /**
+     * Clears all tracking chart datasets and resets axes scale lines.
+     */
     public void clearChart() {
         SwingUtilities.invokeLater(() -> {
             series1.clear();
             series2.clear();
-            yAxis.setRange(-1e-12, 1e-12);
+            yAxis1.setRange(-1e-12, 1e-12);
+            yAxis2.setRange(-1e-12, 1e-12);
             isUserScrolling = false;
         });
     }
 
+    /**
+     * Helper parser utility translating engineering multiplier tokens into raw numeric bounds.
+     * * @param rawValue the raw string payload token to scale
+     * @return the completely solved primitive value mapping factor
+     */
     public static Double parseEngineeringValue(String rawValue) {
         if (rawValue == null || rawValue.trim().isEmpty()) {
             return 0.0;
@@ -657,9 +677,9 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
             case 'p': case 'P': multiplier = 1e-12; break;
             case 'n': case 'N': multiplier = 1e-9;  break;
             case 'u': case 'U': case 'μ': multiplier = 1e-6;  break;
-            case 'm':           multiplier = 1e-3;  break;
+            case 'm':                           multiplier = 1e-3;  break;
             case 'k': case 'K': multiplier = 1e3;   break;
-            case 'M':           multiplier = 1e6;   break;
+            case 'M':                           multiplier = 1e6;   break;
             default:
                 hasPrefix = false;
                 break;
@@ -679,10 +699,18 @@ public class RealTimeChartPanel extends JPanel implements AxisChangeListener {
         }
     }
 
+    /**
+     * Configures the active background data logging state flag.
+     * * @param recording true to activate background file writers
+     */
     public void setRecording(boolean recording) {
         this.isRecording = recording;
     }
 
+    /**
+     * Gets the tracking pipeline paused conditional state context.
+     * * @return true if drawing routines are locked down
+     */
     public boolean isPaused() {
         return this.isPaused;
     }

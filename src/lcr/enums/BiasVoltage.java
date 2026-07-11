@@ -1,5 +1,10 @@
 package lcr.enums;
 
+/**
+ * Representation of the internal physical DC bias voltage injection steps,
+ * used during component testing under specific operating voltage offsets.
+ * * @author sylkat
+ */
 public enum BiasVoltage {
 
     OFF(0),
@@ -10,12 +15,22 @@ public enum BiasVoltage {
 
     private final int value;
 
-    BiasVoltage(int value){
+    /**
+     * Constructs the bias voltage step with its magnitude in millivolts.
+     * * @param value the target voltage parameter in millivolts (mV)
+     */
+    BiasVoltage(int value) {
         this.value = value;
     }
-    public int getValue(){
+
+    /**
+     * Gets the numeric electrical magnitude representation in millivolts.
+     * * @return the integer millivolt level
+     */
+    public int getValue() {
         return value;
     }
+
     @Override
     public String toString() {
         if (this == OFF) {
@@ -24,8 +39,17 @@ public enum BiasVoltage {
         return value + " mV";
     }
 
+    /**
+     * Resolves an incoming string label descriptor or raw millivolt value
+     * key token into its matching BiasVoltage enumeration variant.
+     * * @param text the target string payload to evaluate
+     * @return the matched BiasVoltage instance token, or null if the input is null
+     * @throws IllegalArgumentException if the provided descriptor token cannot be resolved
+     */
     public static BiasVoltage fromString(String text) {
-        if (text == null) return null;
+        if (text == null) {
+            return null;
+        }
 
         String cleanText = text.trim();
 
@@ -36,6 +60,6 @@ public enum BiasVoltage {
                 return a;
             }
         }
-        throw new IllegalArgumentException("BiasVoltage no soportada: " + text);
+        throw new IllegalArgumentException("BiasVoltage not supported: " + text);
     }
 }
