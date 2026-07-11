@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"gui"},{"l":"lcr"},{"l":"lcr.beans"},{"l":"lcr.business"},{"l":"lcr.controller"},{"l":"lcr.enums"},{"l":"lcr.observer"},{"l":"lcr.util"},{"l":"lcr.view"},{"l":"test"}];updateSearchResults();
